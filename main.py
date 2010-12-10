@@ -14,7 +14,7 @@ RADIUS_BUMPER = 70
 RADIUS_ITEM = 10
 RADIUS_PLANET = 70
 RADIUS_ROCKET = 18
-RADIUS_STAR = 10
+RADIUS_STAR = 12 #10
 
 CODE_ASTEROID = 'A'
 CODE_BUMPER = 'B'
@@ -56,6 +56,21 @@ def change_font(widget, size=None, bold=None, italic=None, underline=None):
     if underline is not None:
         font.SetUnderlined(underline)
     widget.SetFont(font)
+    
+def set_choice(choice, value):
+    count = choice.GetCount()
+    for index in range(count):
+        if choice.GetClientData(index) == value:
+            choice.Select(index)
+            break
+    else:
+        choice.Select(wx.NOT_FOUND)
+        
+def get_choice(choice):
+    index = choice.GetSelection()
+    if index < 0:
+        return None
+    return choice.GetClientData(index)
     
 # Model Classes
 class Project(object):
@@ -738,24 +753,21 @@ class Frame(wx.Frame):
         self.level_view.update_level(level)
     def on_entity_dclick(self, event):
         entities = event.entities
-        if all(isinstance(entity, (Planet, Bumper, Asteroid)) for entity in entities):
-            value = self.get_string('Enter scale:', entities[0].scale)
-            try:
-                value = float(value)
-            except Exception:
-                return
-            for entity in entities:
-                entity.scale = value
-            event.GetEventObject().changed()
-        if all(isinstance(entity, Item) for entity in entities):
-            value = self.get_string('Enter type:', entities[0].type)
-            try:
-                value = int(value)
-            except Exception:
-                return
-            for entity in entities:
-                entity.type = value
-            event.GetEventObject().changed()
+        if all(isinstance(entity, Planet) for entity in entities):
+            dialog = PlanetDialog(self, entities)
+            if dialog.ShowModal() == wx.ID_OK:
+                event.GetEventObject().changed()
+            dialog.Destroy()
+        elif all(isinstance(entity, (Planet, Bumper, Asteroid)) for entity in entities):
+            dialog = ScaleDialog(self, entities)
+            if dialog.ShowModal() == wx.ID_OK:
+                event.GetEventObject().changed()
+            dialog.Destroy()
+        elif all(isinstance(entity, Item) for entity in entities):
+            dialog = ItemDialog(self, entities)
+            if dialog.ShowModal() == wx.ID_OK:
+                event.GetEventObject().changed()
+            dialog.Destroy()
     def get_string(self, message, default=''):
         dialog = wx.TextEntryDialog(self, message, 'Data Entry', str(default))
         if dialog.ShowModal() == wx.ID_OK:
@@ -765,29 +777,19 @@ class Frame(wx.Frame):
         dialog.Destroy()
         return result
         
-class MetadataDialog(wx.Dialog):
-    def __init__(self, parent, level):
-        super(MetadataDialog, self).__init__(parent, -1, 'Level Metadata')
-        self.level = level
-        grid = self.create_controls(self)
+class BaseDialog(wx.Dialog):
+    def __init__(self, parent, title):
+        super(BaseDialog, self).__init__(parent, -1, title)
+        controls = self.create_controls(self)
         line = wx.StaticLine(self, -1)
         buttons = self.create_buttons(self)
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(grid, 1, wx.EXPAND|wx.ALL, 10)
+        sizer.Add(controls, 1, wx.EXPAND|wx.ALL, 10)
         sizer.Add(line, 0, wx.EXPAND)
         sizer.Add(buttons, 0, wx.EXPAND|wx.ALL, 10)
         self.SetSizerAndFit(sizer)
         self.update_controls()
         self.Center()
-    def create_controls(self, parent):
-        grid = wx.GridBagSizer(8, 8)
-        for index, name in enumerate(['name', 'left', 'bottom', 'right', 'top']):
-            text = wx.StaticText(parent, -1, name.title())
-            widget = wx.TextCtrl(parent, -1)
-            setattr(self, name, widget)
-            grid.Add(text, (index, 0), flag=wx.ALIGN_CENTER_VERTICAL)
-            grid.Add(widget, (index, 1))
-        return grid
     def create_buttons(self, parent):
         ok = wx.Button(parent, wx.ID_OK, 'OK')
         cancel = wx.Button(parent, wx.ID_CANCEL, 'Cancel')
@@ -802,6 +804,26 @@ class MetadataDialog(wx.Dialog):
     def on_ok(self, event):
         event.Skip()
         self.update_model()
+    def create_controls(self, parent):
+        raise NotImplementedError
+    def update_controls(self):
+        raise NotImplementedError
+    def update_model(self):
+        raise NotImplementedError
+        
+class MetadataDialog(BaseDialog):
+    def __init__(self, parent, level):
+        self.level = level
+        super(MetadataDialog, self).__init__(parent, 'Level Metadata')
+    def create_controls(self, parent):
+        grid = wx.GridBagSizer(8, 8)
+        for index, name in enumerate(['name', 'left', 'bottom', 'right', 'top']):
+            text = wx.StaticText(parent, -1, name.title())
+            widget = wx.TextCtrl(parent, -1)
+            setattr(self, name, widget)
+            grid.Add(text, (index, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+            grid.Add(widget, (index, 1))
+        return grid
     def update_controls(self):
         level = self.level
         self.name.SetValue(level.name)
@@ -819,6 +841,93 @@ class MetadataDialog(wx.Dialog):
         t = int(self.top.GetValue())
         level.bounds = (l, b, r, t)
         
+class ScaleDialog(BaseDialog):
+    def __init__(self, parent, entities):
+        self.entities = entities
+        super(ScaleDialog, self).__init__(parent, 'Entity Options')
+    def create_controls(self, parent):
+        grid = wx.GridBagSizer(8, 8)
+        text = wx.StaticText(parent, -1, 'Scale')
+        self.scale = wx.Slider(parent, -1, 1, 1, 10, size=(128, -1), style=wx.SL_AUTOTICKS)
+        self.label = wx.StaticText(parent, -1, '100%')
+        self.scale.Bind(wx.EVT_SCROLL, self.on_scroll)
+        grid.Add(text, (0, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.scale, (0, 1))
+        grid.Add(self.label, (0, 2), flag=wx.ALIGN_CENTER_VERTICAL)
+        return grid
+    def get_value(self):
+        return self.scale.GetValue() / 10.0
+    def on_scroll(self, event):
+        self.update_label()
+    def update_label(self):
+        label = '%d%%' % int(self.get_value() * 100)
+        self.label.SetLabel(label)
+    def update_controls(self):
+        entity = self.entities[0]
+        self.scale.SetValue(int(entity.scale * 10))
+        self.update_label()
+    def update_model(self):
+        for entity in self.entities:
+            entity.scale = self.get_value()
+            
+class PlanetDialog(ScaleDialog):
+    def __init__(self, parent, entities):
+        super(PlanetDialog, self).__init__(parent, entities)
+    def create_controls(self, parent):
+        data = [
+            ('Earth', 0),
+            ('Europa', 1),
+            ('Ganymede', 2),
+            ('Io', 3),
+            ('Jupiter', 4),
+            ('Mars', 5),
+            ('Moon', 6),
+            ('Neptune', 7),
+            ('Uranus', 8),
+            ('Venus', 9),
+        ]
+        grid = super(PlanetDialog, self).create_controls(parent)
+        text = wx.StaticText(parent, -1, 'Sprite')
+        self.sprite = wx.Choice(parent, -1)
+        for name, value in data:
+            self.sprite.Append(name, value)
+        grid.Add(text, (1, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.sprite, (1, 1))
+        return grid
+    def update_controls(self):
+        super(PlanetDialog, self).update_controls()
+        set_choice(self.sprite, self.entities[0].sprite)
+    def update_model(self):
+        super(PlanetDialog, self).update_model()
+        sprite = get_choice(self.sprite)
+        for entity in self.entities:
+            entity.sprite = sprite
+            
+class ItemDialog(BaseDialog):
+    def __init__(self, parent, entities):
+        self.entities = entities
+        super(ItemDialog, self).__init__(parent, 'Entity Options')
+    def create_controls(self, parent):
+        data = [
+            ('Zipper', 0),
+            ('Magnet', 1),
+            ('Helmet', 2),
+        ]
+        grid = wx.GridBagSizer(8, 8)
+        text = wx.StaticText(parent, -1, 'Type')
+        self.type = wx.Choice(parent, -1)
+        for name, value in data:
+            self.type.Append(name, value)
+        grid.Add(text, (0, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.type, (0, 1))
+        return grid
+    def update_controls(self):
+        set_choice(self.sprite, self.entities[0].type)
+    def update_model(self):
+        type = get_choice(self.type)
+        for entity in self.entities:
+            entity.type = type
+            
 class LevelList(wx.ListCtrl):
     INDEX_NUMBER = 0
     INDEX_NAME = 1
