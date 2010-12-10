@@ -922,7 +922,7 @@ class ItemDialog(BaseDialog):
         grid.Add(self.type, (0, 1))
         return grid
     def update_controls(self):
-        set_choice(self.sprite, self.entities[0].type)
+        set_choice(self.type, self.entities[0].type)
     def update_model(self):
         type = get_choice(self.type)
         for entity in self.entities:
