@@ -933,8 +933,49 @@ class ScrolledWindow(wx.ScrolledWindow):
         self.EnableScrolling(True, True)
         self.SetScrollRate(25, 25)
         
+class BitmapCache(object):
+    def __init__(self):
+        self.cache = {}
+    def get_bitmap(self, entity, scale, selected):
+        key = (
+            entity.stroke,
+            entity.fill,
+            entity.code,
+            int(100 * entity.radius),
+            int(100 * scale),
+            selected,
+        )
+        if key not in self.cache:
+            self.cache[key] = self.create_bitmap(entity, scale, selected)
+        return self.cache[key]
+    def create_bitmap(self, entity, scale, selected):
+        radius = entity.radius * scale
+        size = int(radius + scale * 3)
+        x, y = size, size
+        w, h = size * 2, size * 2
+        bitmap = wx.EmptyBitmap(w, h)
+        dc = wx.MemoryDC(bitmap)
+        dc = wx.GCDC(dc)
+        stroke = wx.Color(*entity.stroke)
+        fill = wx.Color(*entity.fill)
+        dc.SetTextForeground(stroke)
+        dc.SetPen(wx.Pen(stroke, scale * 3))
+        dc.SetBrush(wx.Brush(fill))
+        dc.DrawCircle(x, y, radius)
+        tw, th = dc.GetTextExtent(entity.code)
+        dc.DrawText(entity.code, x - tw / 2, y - th / 2)
+        if selected:
+            color = wx.Color(0, 38, 255, 128)
+            dc.SetPen(wx.Pen(color, scale * 3))
+            dc.SetBrush(wx.Brush(color))
+            dc.DrawCircle(x, y, radius)
+        del dc
+        bitmap.SetMask(wx.Mask(bitmap, wx.BLACK))
+        return bitmap
+        
 class Control(wx.Panel):
     clipboard = set()
+    cache = BitmapCache()
     def __init__(self, parent):
         super(Control, self).__init__(parent, -1, style=wx.WANTS_CHARS)
         self.scale = 1
@@ -1026,11 +1067,10 @@ class Control(wx.Panel):
         dc.DrawText(text, x - w / 2, y - h / 2)
     # Drawing Functions
     def draw(self, dc):
-        gcdc = wx.GCDC(dc)
         dc.SetBackground(wx.BLACK_BRUSH)
         dc.Clear()
         self.draw_grid(dc)
-        self.draw_level(gcdc)
+        self.draw_level(dc)
         self.draw_selection(dc)
     def draw_grid(self, dc):
         l, b, r, t = self.level.bounds
@@ -1075,18 +1115,11 @@ class Control(wx.Panel):
         for entity in self.level.entities:
             self.draw_entity(dc, entity)
     def draw_entity(self, dc, entity):
-        stroke = wx.Color(*entity.stroke)
-        fill = wx.Color(*entity.fill)
-        dc.SetTextForeground(stroke)
-        dc.SetPen(wx.Pen(stroke, self.scale * 3))
-        dc.SetBrush(wx.Brush(fill))
-        self.circle(dc, entity.x, entity.y, entity.radius)
-        self.text(dc, entity.code, entity.x, entity.y)
-        if entity in self.selection:
-            color = wx.Color(0, 38, 255, 128)
-            dc.SetPen(wx.Pen(color, self.scale * 2))
-            dc.SetBrush(wx.Brush(color))
-            self.circle(dc, entity.x, entity.y, entity.radius)
+        selected = entity in self.selection
+        bitmap = Control.cache.get_bitmap(entity, self.scale, selected)
+        w, h = bitmap.GetSize()
+        x, y = self.cc2wx(entity.x, entity.y)
+        dc.DrawBitmap(bitmap, x - w / 2, y - h / 2, True)
     # Model Functions
     def set_level(self, level):
         self.level = level
