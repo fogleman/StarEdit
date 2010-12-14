@@ -7,14 +7,16 @@ import math
 json.encoder.FLOAT_REPR = lambda x: format(x, '.2f')
 
 TITLE = 'Star Edit'
+DEFAULT_NAME = '(Untitled)'
 DEFAULT_BOUNDS = (-240, -160, 240, 160) # LBRT
+DEFAULT_SCALE = 0.5
 
-RADIUS_ASTEROID = 30
-RADIUS_BUMPER = 70
-RADIUS_ITEM = 10
-RADIUS_PLANET = 70
-RADIUS_ROCKET = 18
-RADIUS_STAR = 12 #10
+RADIUS_ASTEROID = 32
+RADIUS_BUMPER = 64
+RADIUS_ITEM = 12
+RADIUS_PLANET = 64
+RADIUS_ROCKET = 20
+RADIUS_STAR = 12
 
 CODE_ASTEROID = 'A'
 CODE_BUMPER = 'B'
@@ -22,6 +24,9 @@ CODE_ITEM = 'I'
 CODE_PLANET = 'P'
 CODE_ROCKET = 'R'
 CODE_STAR = 'S'
+
+PATH_CIRCULAR = 1
+PATH_LINEAR = 2
 
 # Utility Functions
 def menu_item(window, menu, label, func, icon=None):
@@ -97,13 +102,20 @@ class Project(object):
         
 class Level(object):
     def __init__(self):
-        self.name = '(Untitled)'
+        self.name = DEFAULT_NAME
         self.bounds = DEFAULT_BOUNDS
         self.entities = [Rocket(0, 0)]
     def entities_of_type(self, cls):
         return [entity for entity in self.entities if isinstance(entity, cls)]
     def keys_of_type(self, cls):
-        return [entity.key for entity in self.entities if isinstance(entity, cls)]
+        result = []
+        entities = self.entities_of_type(cls)
+        for entity in entities:
+            key = entity.key
+            if entity.path:
+                key['path'] = entity.path.key
+            result.append(key)
+        return result
     def copy(self):
         level = Level()
         level.name = self.name
@@ -124,13 +136,18 @@ class Level(object):
             'rockets': self.keys_of_type(Rocket),
             'stars': self.keys_of_type(Star),
         }
-        return (self.name, self.bounds, entities)
+        result = {
+            'name': self.name,
+            'bounds': self.bounds,
+            'entities': entities,
+        }
+        return result
     @staticmethod
     def from_key(key):
-        name, bounds, entities_data = key
         level = Level()
-        level.name = name
-        level.bounds = tuple(bounds)
+        level.name = key.get('name', DEFAULT_NAME)
+        level.bounds = tuple(key.get('bounds', DEFAULT_BOUNDS))
+        entities_data = key.get('entities', {})
         mapping = [
             ('asteroids', Asteroid),
             ('bumpers', Bumper),
@@ -139,13 +156,29 @@ class Level(object):
             ('rockets', Rocket),
             ('stars', Star),
         ]
+        path_mapping = {
+            PATH_CIRCULAR: CircularPath,
+            PATH_LINEAR: LinearPath,
+        }
         entities = []
         for name, cls in mapping:
-            entities.extend([cls.from_key(key) for key in entities_data[name]])
+            keys = entities_data.get(name, [])
+            for key in keys:
+                entity = cls.from_key(key)
+                path_key = key.get('path', None)
+                if path_key:
+                    path_cls = path_mapping[path_key['type']]
+                    path = path_cls.from_key(path_key)
+                    entity.path = path
+                entities.append(entity)
         level.entities = entities
         return level
         
 class Entity(object):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.path = None
     def contains(self, x, y):
         radius = self.radius
         dx = abs(x - self.x)
@@ -167,20 +200,67 @@ class Entity(object):
             return False
         return True
         
+class CircularPath(object):
+    def __init__(self, radius, angle, period, clockwise):
+        self.radius = radius
+        self.angle = angle
+        self.period = period
+        self.clockwise = clockwise
+    @property
+    def key(self):
+        result = {
+            'type': PATH_CIRCULAR,
+            'radius': self.radius,
+            'angle': self.angle,
+            'period': self.period,
+            'clockwise': self.clockwise,
+        }
+        return result
+    @staticmethod
+    def from_key(key):
+        radius = key['radius']
+        angle = key['angle']
+        period = key['period']
+        clockwise = key['clockwise']
+        return CircularPath(radius, angle, period, clockwise)
+        
+class LinearPath(object):
+    def __init__(self, dx, dy, period):
+        self.dx = dx
+        self.dy = dy
+        self.period = period
+    @property
+    def key(self):
+        result = {
+            'type': PATH_LINEAR,
+            'dx': self.dx,
+            'dy': self.dy,
+            'period': self.period,
+        }
+        return result
+    @staticmethod
+    def from_key(key):
+        dx = key['dx']
+        dy = key['dy']
+        period = key['period']
+        return LinearPath(dx, dy, period)
+        
 class Rocket(Entity):
     code = CODE_ROCKET
     radius = RADIUS_ROCKET
     stroke = (127, 0, 0)
     fill = (255, 127, 127)
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
     @property
     def key(self):
-        return (self.x, self.y)
+        result = {
+            'x': self.x,
+            'y': self.y,
+        }
+        return result
     @staticmethod
     def from_key(key):
-        x, y = key
+        x = key.get('x', 0)
+        y = key.get('y', 0)
         return Rocket(x, y)
     def copy(self):
         return Rocket(self.x, self.y)
@@ -190,8 +270,7 @@ class Planet(Entity):
     stroke = (64, 64, 64)
     fill = (128, 128, 128)
     def __init__(self, x, y, scale, sprite):
-        self.x = x
-        self.y = y
+        super(Planet, self).__init__(x, y)
         self.scale = scale
         self.sprite = sprite
     @property
@@ -199,10 +278,19 @@ class Planet(Entity):
         return RADIUS_PLANET * self.scale
     @property
     def key(self):
-        return (self.x, self.y, self.scale, self.sprite)
+        result = {
+            'x': self.x,
+            'y': self.y,
+            'scale': self.scale,
+            'sprite': self.sprite,
+        }
+        return result
     @staticmethod
     def from_key(key):
-        x, y, scale, sprite = key
+        x = key.get('x', 0)
+        y = key.get('y', 0)
+        scale = key.get('scale', DEFAULT_SCALE)
+        sprite = key.get('sprite', 0)
         return Planet(x, y, scale, sprite)
     def copy(self):
         return Planet(self.x, self.y, self.scale, self.sprite)
@@ -212,18 +300,24 @@ class Bumper(Entity):
     stroke = (0, 40, 127)
     fill = (50, 115, 255)
     def __init__(self, x, y, scale):
-        self.x = x
-        self.y = y
+        super(Bumper, self).__init__(x, y)
         self.scale = scale
     @property
     def radius(self):
         return RADIUS_BUMPER * self.scale
     @property
     def key(self):
-        return (self.x, self.y, self.scale)
+        result = {
+            'x': self.x,
+            'y': self.y,
+            'scale': self.scale,
+        }
+        return result
     @staticmethod
     def from_key(key):
-        x, y, scale = key
+        x = key.get('x', 0)
+        y = key.get('y', 0)
+        scale = key.get('scale', DEFAULT_SCALE)
         return Bumper(x, y, scale)
     def copy(self):
         return Bumper(self.x, self.y, self.scale)
@@ -233,18 +327,24 @@ class Asteroid(Entity):
     stroke = (63, 44, 31)
     fill = (191, 133, 95)
     def __init__(self, x, y, scale):
-        self.x = x
-        self.y = y
+        super(Asteroid, self).__init__(x, y)
         self.scale = scale
     @property
     def radius(self):
         return RADIUS_ASTEROID * self.scale
     @property
     def key(self):
-        return (self.x, self.y, self.scale)
+        result = {
+            'x': self.x,
+            'y': self.y,
+            'scale': self.scale,
+        }
+        return result
     @staticmethod
     def from_key(key):
-        x, y, scale = key
+        x = key.get('x', 0)
+        y = key.get('y', 0)
+        scale = key.get('scale', DEFAULT_SCALE)
         return Asteroid(x, y, scale)
     def copy(self):
         return Asteroid(self.x, self.y, self.scale)
@@ -255,15 +355,21 @@ class Item(Entity):
     stroke = (0, 127, 14)
     fill = (127, 255, 142)
     def __init__(self, x, y, type):
-        self.x = x
-        self.y = y
+        super(Item, self).__init__(x, y)
         self.type = type
     @property
     def key(self):
-        return (self.x, self.y, self.type)
+        result = {
+            'x': self.x,
+            'y': self.y,
+            'type': self.type,
+        }
+        return result
     @staticmethod
     def from_key(key):
-        x, y, type = key
+        x = key.get('x', 0)
+        y = key.get('y', 0)
+        type = key.get('type', 0)
         return Item(x, y, type)
     def copy(self):
         return Item(self.x, self.y, self.type)
@@ -273,15 +379,17 @@ class Star(Entity):
     radius = RADIUS_STAR
     stroke = (255, 127, 0)
     fill = (255, 233, 127)
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
     @property
     def key(self):
-        return (self.x, self.y)
+        result = {
+            'x': self.x,
+            'y': self.y,
+        }
+        return result
     @staticmethod
     def from_key(key):
-        x, y = key
+        x = key.get('x', 0)
+        y = key.get('y', 0)
         return Star(x, y)
     def copy(self):
         return Star(self.x, self.y)
@@ -443,6 +551,9 @@ class Frame(wx.Frame):
         menu.AppendSeparator()
         menu_item(self, menu, 'Linear Array...', self.on_linear_array, icons.arrow_left)
         menu_item(self, menu, 'Circular Array...', self.on_circular_array, icons.arrow_rotate_anticlockwise)
+        menu.AppendSeparator()
+        menu_item(self, menu, 'Linear Path...', self.on_linear_path)
+        menu_item(self, menu, 'Circular Path...', self.on_circular_path)
         menubar.Append(menu, '&Tools')
         self.SetMenuBar(menubar)
     def create_toolbar(self):
@@ -713,13 +824,13 @@ class Frame(wx.Frame):
         entity = Star(0, 0)
         self.control.add_entity(entity)
     def on_planet(self, event):
-        entity = Planet(0, 0, 0.5, 0)
+        entity = Planet(0, 0, DEFAULT_SCALE, 0)
         self.control.add_entity(entity)
     def on_bumper(self, event):
-        entity = Bumper(0, 0, 0.5)
+        entity = Bumper(0, 0, DEFAULT_SCALE)
         self.control.add_entity(entity)
     def on_asteroid(self, event):
-        entity = Asteroid(0, 0, 0.5)
+        entity = Asteroid(0, 0, DEFAULT_SCALE)
         self.control.add_entity(entity)
     def on_item(self, event):
         entity = Item(0, 0, 0)
@@ -747,6 +858,14 @@ class Frame(wx.Frame):
         except Exception:
             return
         self.control.circular_array(count)
+    def on_linear_path(self, event):
+        pass
+    def on_circular_path(self, event):
+        entities = list(self.control.selection)
+        dialog = CircularPathDialog(self, entities)
+        if dialog.ShowModal() == wx.ID_OK:
+            self.control.changed()
+        dialog.Destroy()
     def on_control_changed(self, event):
         self.unsaved = True
         level = event.GetEventObject().level
@@ -927,6 +1046,41 @@ class ItemDialog(BaseDialog):
         type = get_choice(self.type)
         for entity in self.entities:
             entity.type = type
+            
+class CircularPathDialog(BaseDialog):
+    def __init__(self, parent, entities):
+        self.entities = entities
+        super(CircularPathDialog, self).__init__(parent, 'Circular Path Options')
+    def create_controls(self, parent):
+        grid = wx.GridBagSizer(8, 8)
+        text = wx.StaticText(parent, -1, 'Period')
+        self.period = wx.TextCtrl(parent, -1)
+        grid.Add(text, (0, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.period, (0, 1))
+        text = wx.StaticText(parent, -1, 'Clockwise')
+        self.clockwise = wx.CheckBox(parent, -1)
+        grid.Add(text, (1, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.clockwise, (1, 1))
+        return grid
+    def update_controls(self):
+        entity = self.entities[0]
+        path = entity.path
+        if path:
+            self.period.SetValue(str(path.period))
+            self.clockwise.SetValue(path.clockwise)
+    def update_model(self):
+        period = float(self.period.GetValue())
+        clockwise = self.clockwise.GetValue()
+        for entity in self.entities:
+            dx = entity.x
+            dy = entity.y
+            if dx == 0 and dy == 0:
+                continue
+            radius = (dx * dx + dy * dy) ** 0.5
+            angle = math.atan2(dy, dx)
+            angle = math.degrees(angle)
+            path = CircularPath(radius, angle, period, clockwise)
+            entity.path = path
             
 class LevelList(wx.ListCtrl):
     INDEX_NUMBER = 0
@@ -1111,8 +1265,8 @@ class Control(wx.Panel):
         event.Skip()
         self.Refresh()
     def on_paint(self, event):
-        dc = wx.BufferedPaintDC(self)
-        #dc = wx.PaintDC(self)
+        #dc = wx.BufferedPaintDC(self)
+        dc = wx.PaintDC(self)
         self.draw(dc)
     def set_scale(self, scale):
         self.scale = scale
