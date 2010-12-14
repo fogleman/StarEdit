@@ -77,6 +77,11 @@ def get_choice(choice):
         return None
     return choice.GetClientData(index)
     
+def copy_path(src, dest):
+    if src.path:
+        dest.path = src.path.copy()
+    return dest
+    
 # Model Classes
 class Project(object):
     def __init__(self):
@@ -223,6 +228,8 @@ class CircularPath(object):
         period = key['period']
         clockwise = key['clockwise']
         return CircularPath(radius, angle, period, clockwise)
+    def copy(self):
+        return CircularPath(self.radius, self.angle, self.period, self.clockwise)
         
 class LinearPath(object):
     def __init__(self, dx, dy, period):
@@ -244,6 +251,8 @@ class LinearPath(object):
         dy = key['dy']
         period = key['period']
         return LinearPath(dx, dy, period)
+    def copy(self):
+        return LinearPath(self.dx, self.dy, self.period)
         
 class Rocket(Entity):
     code = CODE_ROCKET
@@ -263,7 +272,7 @@ class Rocket(Entity):
         y = key.get('y', 0)
         return Rocket(x, y)
     def copy(self):
-        return Rocket(self.x, self.y)
+        return copy_path(self, Rocket(self.x, self.y))
         
 class Planet(Entity):
     code = CODE_PLANET
@@ -293,7 +302,7 @@ class Planet(Entity):
         sprite = key.get('sprite', 0)
         return Planet(x, y, scale, sprite)
     def copy(self):
-        return Planet(self.x, self.y, self.scale, self.sprite)
+        return copy_path(self, Planet(self.x, self.y, self.scale, self.sprite))
         
 class Bumper(Entity):
     code = CODE_BUMPER
@@ -320,7 +329,7 @@ class Bumper(Entity):
         scale = key.get('scale', DEFAULT_SCALE)
         return Bumper(x, y, scale)
     def copy(self):
-        return Bumper(self.x, self.y, self.scale)
+        return copy_path(self, Bumper(self.x, self.y, self.scale))
         
 class Asteroid(Entity):
     code = CODE_ASTEROID
@@ -347,7 +356,7 @@ class Asteroid(Entity):
         scale = key.get('scale', DEFAULT_SCALE)
         return Asteroid(x, y, scale)
     def copy(self):
-        return Asteroid(self.x, self.y, self.scale)
+        return copy_path(self, Asteroid(self.x, self.y, self.scale))
         
 class Item(Entity):
     code = CODE_ITEM
@@ -372,7 +381,7 @@ class Item(Entity):
         type = key.get('type', 0)
         return Item(x, y, type)
     def copy(self):
-        return Item(self.x, self.y, self.type)
+        return copy_path(self, Item(self.x, self.y, self.type))
         
 class Star(Entity):
     code = CODE_STAR
@@ -392,7 +401,7 @@ class Star(Entity):
         y = key.get('y', 0)
         return Star(x, y)
     def copy(self):
-        return Star(self.x, self.y)
+        return copy_path(self, Star(self.x, self.y))
         
 # View Classes
 EVT_ENTITY_DCLICK = wx.PyEventBinder(wx.NewEventType())
@@ -1265,8 +1274,8 @@ class Control(wx.Panel):
         event.Skip()
         self.Refresh()
     def on_paint(self, event):
-        #dc = wx.BufferedPaintDC(self)
-        dc = wx.PaintDC(self)
+        dc = wx.BufferedPaintDC(self)
+        #dc = wx.PaintDC(self)
         self.draw(dc)
     def set_scale(self, scale):
         self.scale = scale
@@ -1376,7 +1385,19 @@ class Control(wx.Panel):
             dc.SetLogicalFunction(wx.COPY)
     def draw_level(self, dc):
         for entity in self.level.entities:
+            self.draw_path(dc, entity)
+        for entity in self.level.entities:
             self.draw_entity(dc, entity)
+    def draw_path(self, dc, entity):
+        path = entity.path
+        dc.SetPen(wx.Pen(wx.WHITE, 1, wx.DOT))
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        if isinstance(path, CircularPath):
+            radius = path.radius
+            angle = math.radians(path.angle + 180)
+            x = entity.x + math.cos(angle) * radius
+            y = entity.y + math.sin(angle) * radius
+            self.circle(dc, x, y, radius)
     def draw_entity(self, dc, entity):
         selected = entity in self.selection
         bitmap = Control.cache.get_bitmap(entity, self.scale, selected)
