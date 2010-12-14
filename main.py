@@ -561,8 +561,9 @@ class Frame(wx.Frame):
         menu_item(self, menu, 'Linear Array...', self.on_linear_array, icons.arrow_left)
         menu_item(self, menu, 'Circular Array...', self.on_circular_array, icons.arrow_rotate_anticlockwise)
         menu.AppendSeparator()
-        menu_item(self, menu, 'Linear Path...', self.on_linear_path)
+        #menu_item(self, menu, 'Linear Path...', self.on_linear_path)
         menu_item(self, menu, 'Circular Path...', self.on_circular_path)
+        menu_item(self, menu, 'Delete Path', self.on_delete_path)
         menubar.Append(menu, '&Tools')
         self.SetMenuBar(menubar)
     def create_toolbar(self):
@@ -875,6 +876,8 @@ class Frame(wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             self.control.changed()
         dialog.Destroy()
+    def on_delete_path(self, event):
+        self.control.delete_path()
     def on_control_changed(self, event):
         self.unsaved = True
         level = event.GetEventObject().level
@@ -1514,6 +1517,10 @@ class Control(wx.Panel):
                 other.x = int(math.cos(angle) * d)
                 other.y = int(math.sin(angle) * d)
                 self.level.entities.append(other)
+        self.changed()
+    def delete_path(self):
+        for entity in self.selection:
+            entity.path = None
         self.changed()
     def get_entity_at(self, x, y):
         entities = self.get_entities_at(x, y)
