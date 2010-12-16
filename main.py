@@ -14,7 +14,7 @@ DEFAULT_SCALE = 0.5
 
 RADIUS_ASTEROID = 32
 RADIUS_BUMPER = 64
-RADIUS_ITEM = 12
+RADIUS_ITEM = 16
 RADIUS_PLANET = 64
 RADIUS_ROCKET = 20
 RADIUS_STAR = 12
@@ -556,6 +556,7 @@ class Frame(wx.Frame):
         menu = wx.Menu()
         menu_item(self, menu, 'New\tCtrl+N', self.on_new, icons.page)
         menu_item(self, menu, 'Open...\tCtrl+O', self.on_open, icons.folder_page)
+        menu_item(self, menu, 'Import...', self.on_import)
         menu.AppendSeparator()
         menu_item(self, menu, 'Save\tCtrl+S', self.on_save, icons.disk)
         menu_item(self, menu, 'Save As...\tCtrl+Shift+S', self.on_save_as)
@@ -781,6 +782,14 @@ class Frame(wx.Frame):
                 project = Project.load(path)
                 self.set_project(project)
                 self.unsaved = False
+    def on_import(self, event):
+        dialog = wx.FileDialog(self, 'Import', wildcard='*.star', style=wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
+        result = dialog.ShowModal()
+        if result == wx.ID_OK:
+            path = dialog.GetPath()
+            project = Project.load(path)
+            self.project.levels.extend(project.levels)
+            self.level_view.update()
     def on_save(self, event):
         if self.path:
             self.project.save(self.path)
