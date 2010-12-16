@@ -3,13 +3,14 @@ import wx.aui as aui
 import functools
 import json
 import math
+import sys
 import icons
 
 json.encoder.FLOAT_REPR = lambda x: format(x, '.2f')
 
 TITLE = 'Star Edit'
 DEFAULT_NAME = '(Untitled)'
-DEFAULT_BOUNDS = (-240, -160, 240, 160) # LBRT
+DEFAULT_BOUNDS = (-240, -160, 240, 160)
 DEFAULT_SCALE = 0.5
 
 RADIUS_ASTEROID = 32
@@ -18,13 +19,6 @@ RADIUS_ITEM = 16
 RADIUS_PLANET = 64
 RADIUS_ROCKET = 20
 RADIUS_STAR = 12
-
-CODE_ASTEROID = 'A'
-CODE_BUMPER = 'B'
-CODE_ITEM = 'I'
-CODE_PLANET = 'P'
-CODE_ROCKET = 'R'
-CODE_STAR = 'S'
 
 PATH_CIRCULAR = 1
 PATH_LINEAR = 2
@@ -207,59 +201,56 @@ class Entity(object):
         return True
         
 class CircularPath(object):
-    def __init__(self, radius, angle, period, clockwise):
-        self.radius = radius
-        self.angle = angle
+    def __init__(self, x, y, period, clockwise):
+        self.x = x
+        self.y = y
         self.period = period
         self.clockwise = clockwise
     @property
     def key(self):
         result = {
             'type': PATH_CIRCULAR,
-            'radius': self.radius,
-            'angle': self.angle,
+            'x': self.x,
+            'y': self.y,
             'period': self.period,
             'clockwise': self.clockwise,
         }
         return result
     @staticmethod
     def from_key(key):
-        radius = key['radius']
-        angle = key['angle']
+        x = key['x']
+        y = key['y']
         period = key['period']
         clockwise = key['clockwise']
-        return CircularPath(radius, angle, period, clockwise)
+        return CircularPath(x, y, period, clockwise)
     def copy(self):
-        return CircularPath(self.radius, self.angle, self.period, self.clockwise)
+        return CircularPath(self.x, self.y, self.period, self.clockwise)
         
 class LinearPath(object):
-    def __init__(self, dx, dy, period):
-        self.dx = dx
-        self.dy = dy
+    def __init__(self, x, y, period):
+        self.x = x
+        self.y = y
         self.period = period
     @property
     def key(self):
         result = {
             'type': PATH_LINEAR,
-            'dx': self.dx,
-            'dy': self.dy,
+            'x': self.x,
+            'y': self.y,
             'period': self.period,
         }
         return result
     @staticmethod
     def from_key(key):
-        dx = key['dx']
-        dy = key['dy']
+        x = key['x']
+        y = key['y']
         period = key['period']
-        return LinearPath(dx, dy, period)
+        return LinearPath(x, y, period)
     def copy(self):
-        return LinearPath(self.dx, self.dy, self.period)
+        return LinearPath(self.x, self.y, self.period)
         
 class Rocket(Entity):
-    code = CODE_ROCKET
     radius = RADIUS_ROCKET
-    stroke = (127, 0, 0)
-    fill = (255, 127, 127)
     @property
     def image(self):
         return icons.rocket.GetImage()
@@ -282,9 +273,6 @@ class Rocket(Entity):
         return copy_path(self, Rocket(self.x, self.y))
         
 class Planet(Entity):
-    code = CODE_PLANET
-    stroke = (64, 64, 64)
-    fill = (128, 128, 128)
     def __init__(self, x, y, scale, sprite):
         super(Planet, self).__init__(x, y)
         self.scale = scale
@@ -326,9 +314,6 @@ class Planet(Entity):
         return copy_path(self, Planet(self.x, self.y, self.scale, self.sprite))
         
 class Bumper(Entity):
-    code = CODE_BUMPER
-    stroke = (0, 40, 127)
-    fill = (50, 115, 255)
     def __init__(self, x, y, scale):
         super(Bumper, self).__init__(x, y)
         self.scale = scale
@@ -359,9 +344,6 @@ class Bumper(Entity):
         return copy_path(self, Bumper(self.x, self.y, self.scale))
         
 class Asteroid(Entity):
-    code = CODE_ASTEROID
-    stroke = (63, 44, 31)
-    fill = (191, 133, 95)
     def __init__(self, x, y, scale):
         super(Asteroid, self).__init__(x, y)
         self.scale = scale
@@ -392,10 +374,7 @@ class Asteroid(Entity):
         return copy_path(self, Asteroid(self.x, self.y, self.scale))
         
 class Item(Entity):
-    code = CODE_ITEM
     radius = RADIUS_ITEM
-    stroke = (0, 127, 14)
-    fill = (127, 255, 142)
     def __init__(self, x, y, type):
         super(Item, self).__init__(x, y)
         self.type = type
@@ -428,10 +407,7 @@ class Item(Entity):
         return copy_path(self, Item(self.x, self.y, self.type))
         
 class Star(Entity):
-    code = CODE_STAR
     radius = RADIUS_STAR
-    stroke = (255, 127, 0)
-    fill = (255, 233, 127)
     @property
     def image(self):
         return icons.coin.GetImage()
@@ -612,7 +588,7 @@ class Frame(wx.Frame):
         menu_item(self, menu, 'Linear Array...', self.on_linear_array, icons.arrow_left)
         menu_item(self, menu, 'Circular Array...', self.on_circular_array, icons.arrow_rotate_anticlockwise)
         menu.AppendSeparator()
-        #menu_item(self, menu, 'Linear Path...', self.on_linear_path)
+        menu_item(self, menu, 'Linear Path...', self.on_linear_path)
         menu_item(self, menu, 'Circular Path...', self.on_circular_path)
         menu_item(self, menu, 'Delete Path', self.on_delete_path)
         menubar.Append(menu, '&Tools')
@@ -928,7 +904,11 @@ class Frame(wx.Frame):
             return
         self.control.circular_array(count)
     def on_linear_path(self, event):
-        pass
+        entities = list(self.control.selection)
+        dialog = LinearPathDialog(self, entities)
+        if dialog.ShowModal() == wx.ID_OK:
+            self.control.changed()
+        dialog.Destroy()
     def on_circular_path(self, event):
         entities = list(self.control.selection)
         dialog = CircularPathDialog(self, entities)
@@ -1114,6 +1094,27 @@ class ItemDialog(BaseDialog):
         for entity in self.entities:
             entity.type = type
             
+class LinearPathDialog(BaseDialog):
+    def __init__(self, parent, entities):
+        self.entities = entities
+        super(LinearPathDialog, self).__init__(parent, 'Linear Path Options')
+    def create_controls(self, parent):
+        grid = wx.GridBagSizer(8, 8)
+        text = wx.StaticText(parent, -1, 'Period')
+        self.period = wx.TextCtrl(parent, -1)
+        grid.Add(text, (0, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.period, (0, 1))
+        return grid
+    def update_controls(self):
+        entity = self.entities[0]
+        path = entity.path
+        if path:
+            self.period.SetValue(str(path.period))
+    def update_model(self):
+        period = float(self.period.GetValue())
+        for entity in self.entities:
+            entity.path = LinearPath(0, 0, period)
+            
 class CircularPathDialog(BaseDialog):
     def __init__(self, parent, entities):
         self.entities = entities
@@ -1139,15 +1140,7 @@ class CircularPathDialog(BaseDialog):
         period = float(self.period.GetValue())
         clockwise = self.clockwise.GetValue()
         for entity in self.entities:
-            dx = entity.x
-            dy = entity.y
-            if dx == 0 and dy == 0:
-                continue
-            radius = (dx * dx + dy * dy) ** 0.5
-            angle = math.atan2(dy, dx)
-            angle = math.degrees(angle)
-            path = CircularPath(radius, angle, period, clockwise)
-            entity.path = path
+            entity.path = CircularPath(0, 0, period, clockwise)
             
 class LevelList(wx.ListCtrl):
     INDEX_NUMBER = 0
@@ -1276,47 +1269,23 @@ class BitmapCache(object):
             self.cache[key] = self.create_bitmap(entity, scale, selected)
         return self.cache[key]
     def create_bitmap(self, entity, scale, selected):
-        if hasattr(entity, 'image'):
-            if hasattr(entity, 'scale'):
-                bitmap_scale = scale * entity.scale / 2.0
-            else:
-                bitmap_scale = scale / 2.0
-            image = entity.image
-            w, h = image.GetWidth(), image.GetHeight()
-            w, h = int(w * bitmap_scale), int(h * bitmap_scale)
-            image.Rescale(w, h, wx.IMAGE_QUALITY_HIGH)
-            bitmap = wx.BitmapFromImage(image)
-            if selected:
-                x, y = w / 2, h / 2
-                radius = entity.radius * scale
-                dc = wx.MemoryDC(bitmap)
-                dc = wx.GCDC(dc)
-                dc.SetPen(wx.Pen(wx.Color(255, 0, 0), 1))
-                dc.SetBrush(wx.Brush(wx.Color(255, 0, 0, 128)))
-                dc.DrawCircle(x, y, radius)
-            return bitmap
-        radius = entity.radius * scale
-        size = int(radius + scale * 3)
-        x, y = size, size
-        w, h = size * 2, size * 2
-        bitmap = wx.EmptyBitmap(w, h)
-        dc = wx.MemoryDC(bitmap)
-        dc = wx.GCDC(dc)
-        stroke = wx.Color(*entity.stroke)
-        fill = wx.Color(*entity.fill)
-        dc.SetTextForeground(stroke)
-        dc.SetPen(wx.Pen(stroke, scale * 3))
-        dc.SetBrush(wx.Brush(fill))
-        dc.DrawCircle(x, y, radius)
-        tw, th = dc.GetTextExtent(entity.code)
-        dc.DrawText(entity.code, x - tw / 2, y - th / 2)
+        if hasattr(entity, 'scale'):
+            bitmap_scale = scale * entity.scale / 2.0
+        else:
+            bitmap_scale = scale / 2.0
+        image = entity.image
+        w, h = image.GetWidth(), image.GetHeight()
+        w, h = int(w * bitmap_scale), int(h * bitmap_scale)
+        image.Rescale(w, h, wx.IMAGE_QUALITY_HIGH)
+        bitmap = wx.BitmapFromImage(image)
         if selected:
-            color = wx.Color(0, 38, 255, 128)
-            dc.SetPen(wx.Pen(color, scale * 3))
-            dc.SetBrush(wx.Brush(color))
+            x, y = w / 2, h / 2
+            radius = entity.radius * scale
+            dc = wx.MemoryDC(bitmap)
+            dc = wx.GCDC(dc)
+            dc.SetPen(wx.Pen(wx.Color(255, 0, 0), 1))
+            dc.SetBrush(wx.Brush(wx.Color(255, 0, 0, 128)))
             dc.DrawCircle(x, y, radius)
-        del dc
-        bitmap.SetMask(wx.Mask(bitmap, wx.BLACK))
         return bitmap
         
 class Control(wx.Panel):
@@ -1324,6 +1293,7 @@ class Control(wx.Panel):
     cache = BitmapCache()
     def __init__(self, parent):
         super(Control, self).__init__(parent, -1, style=wx.WANTS_CHARS)
+        self.buffered = (sys.platform != 'darwin')
         self.scale = 1
         self.minor_grid = (10, 10)
         self.major_grid = (100, 100) #(120, 80)
@@ -1348,8 +1318,10 @@ class Control(wx.Panel):
         event.Skip()
         self.Refresh()
     def on_paint(self, event):
-        dc = wx.BufferedPaintDC(self)
-        #dc = wx.PaintDC(self)
+        if self.buffered:
+            dc = wx.BufferedPaintDC(self)
+        else:
+            dc = wx.PaintDC(self)
         self.draw(dc)
     def set_scale(self, scale):
         self.scale = scale
@@ -1467,11 +1439,14 @@ class Control(wx.Panel):
         dc.SetPen(wx.Pen(wx.WHITE, 1, wx.DOT))
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
         if isinstance(path, CircularPath):
-            radius = path.radius
-            angle = math.radians(path.angle + 180)
-            x = entity.x + math.cos(angle) * radius
-            y = entity.y + math.sin(angle) * radius
-            self.circle(dc, x, y, radius)
+            dx = entity.x - path.x
+            dy = entity.y - path.y
+            radius = (dx * dx + dy * dy) ** 0.5
+            self.circle(dc, path.x, path.y, radius)
+        elif isinstance(path, LinearPath):
+            dx = entity.x - path.x
+            dy = entity.y - path.y
+            self.line(dc, entity.x, entity.y, entity.x - dx * 2, entity.y - dy * 2)
     def draw_entity(self, dc, entity):
         selected = entity in self.selection
         bitmap = Control.cache.get_bitmap(entity, self.scale, selected)
@@ -1546,19 +1521,25 @@ class Control(wx.Panel):
         for entity in self.selection:
             entity.x *= mx
             entity.y *= my
+            if entity.path:
+                entity.path.x *= mx
+                entity.path.y *= my
         self.changed()
     def rotate(self, degrees):
         for entity in self.selection:
-            dx = entity.x
-            dy = entity.y
-            if dx == 0 and dy == 0:
-                continue
-            d = (dx * dx + dy * dy) ** 0.5
-            angle = math.atan2(dy, dx)
-            angle = angle + math.radians(degrees)
-            entity.x = int(math.cos(angle) * d)
-            entity.y = int(math.sin(angle) * d)
+            entity.x, entity.y = self._rotate(entity.x, entity.y, degrees)
+            if entity.path:
+                entity.path.x, entity.path.y = self._rotate(entity.path.x, entity.path.y, degrees)
         self.changed()
+    def _rotate(self, x, y, degrees):
+        if x == 0 and y == 0:
+            return x, y
+        d = (x * x + y * y) ** 0.5
+        angle = math.atan2(y, x)
+        angle = angle + math.radians(degrees)
+        x = math.cos(angle) * d
+        y = math.sin(angle) * d
+        return x, y
     def linear_array(self, count):
         for entity in self.selection:
             x = entity.x
@@ -1569,24 +1550,22 @@ class Control(wx.Panel):
             dy = y / float(count - 1)
             for i in range(1, count):
                 other = entity.copy()
-                other.x = int(x - dx * i)
-                other.y = int(y - dy * i)
+                other.x -= dx * i
+                other.y -= dy * i
+                if other.path:
+                    other.path.x -= dx * i
+                    other.path.y -= dy * i
                 self.level.entities.append(other)
         self.changed()
     def circular_array(self, count):
-        step = math.radians(360.0 / count)
+        step = 360.0 / count
         for entity in self.selection:
-            dx = entity.x
-            dy = entity.y
-            if dx == 0 and dy == 0:
-                continue
-            d = (dx * dx + dy * dy) ** 0.5
-            start = math.atan2(dy, dx)
             for i in range(1, count):
-                angle = start + step * i
+                degrees = step * i
                 other = entity.copy()
-                other.x = int(math.cos(angle) * d)
-                other.y = int(math.sin(angle) * d)
+                other.x, other.y = self._rotate(other.x, other.y, degrees)
+                if other.path:
+                    other.path.x, other.path.y = self._rotate(other.path.x, other.path.y, degrees)
                 self.level.entities.append(other)
         self.changed()
     def delete_path(self):
@@ -1658,6 +1637,9 @@ class Control(wx.Panel):
             for entity in self.selection:
                 entity.x += dx
                 entity.y += dy
+                if entity.path:
+                    entity.path.x += dx
+                    entity.path.y += dy
             self.changed()
     def on_left_double(self, event):
         x, y = event.GetPosition()
@@ -1687,7 +1669,7 @@ class Control(wx.Panel):
                 entities = list(self.selection)
                 entities.remove(entity)
                 entities.insert(0, entity)
-                self.moving = [(e, e.x, e.y) for e in entities]
+                self.moving = [(e, e.x, e.y, e.path.copy() if e.path else None) for e in entities]
                 self.CaptureMouse()
         else:
             if not event.ControlDown():
@@ -1709,7 +1691,7 @@ class Control(wx.Panel):
             else:
                 self.selection = entities
         if self.moving:
-            for entity, sx, sy in self.moving:
+            for entity, sx, sy, original_path in self.moving:
                 if entity.x != sx or entity.y != sy:
                     self.changed()
                     break
@@ -1722,12 +1704,15 @@ class Control(wx.Panel):
         if self.moving:
             ax, ay = self.anchor
             dx, dy = x - ax, y - ay
-            entity, sx, sy = self.moving[0]
+            entity, sx, sy, original_path = self.moving[0]
             mx = self.snap(sx + dx, self.minor_grid[0]) - sx
             my = self.snap(sy + dy, self.minor_grid[1]) - sy
-            for entity, sx, sy in self.moving:
+            for entity, sx, sy, original_path in self.moving:
                 entity.x = sx + mx
                 entity.y = sy + my
+                if entity.path and original_path:
+                    entity.path.x = original_path.x + mx
+                    entity.path.y = original_path.y + my
             self.Refresh()
         if self.selecting:
             self.Refresh()
