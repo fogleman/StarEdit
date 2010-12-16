@@ -551,6 +551,11 @@ class Frame(wx.Frame):
         menu.AppendSeparator()
         menu_item(self, menu, 'Delete\tDel', self.on_delete, icons.page_delete)
         menu_item(self, menu, 'Select All\tCtrl+A', self.on_select_all)
+        menu.AppendSeparator()
+        for cls in (Rocket, Star, Planet, Bumper, Asteroid, Item):
+            name = cls.__name__
+            func = functools.partial(self.on_select_all, cls=cls)
+            menu_item(self, menu, 'Select All - %ss' % name, func)
         menubar.Append(menu, '&Edit')
         # View
         menu = wx.Menu()
@@ -846,8 +851,8 @@ class Frame(wx.Frame):
         self.control.duplicate()
     def on_delete(self, event):
         self.control.delete()
-    def on_select_all(self, event):
-        self.control.select_all()
+    def on_select_all(self, event, cls=None):
+        self.control.select_all(cls)
     def on_next_tab(self, event):
         self.advance_page(True)
     def on_previous_tab(self, event):
@@ -1514,8 +1519,13 @@ class Control(wx.Panel):
             self.level.entities.remove(entity)
         self.selection.clear()
         self.changed()
-    def select_all(self):
-        self.selection = set(self.level.entities)
+    def select_all(self, cls=None):
+        entities = set()
+        for entity in self.level.entities:
+            if cls and not isinstance(entity, cls):
+                continue
+            entities.add(entity)
+        self.selection = entities
         self.Refresh()
     def mirror(self, mx, my):
         for entity in self.selection:
