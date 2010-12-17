@@ -1422,23 +1422,20 @@ class Control(wx.Panel):
         x, y = self.cc2wx(x, y)
         dc.DrawText(text, x - w / 2, y - h / 2)
     # Drawing Functions
-    def create_bitmap(self, scale=1, size=256, square=True):
+    def create_bitmap(self, scale=1, size=256):
         l, b, r, t = self.level.bounds
         w, h = r - l, t - b
-        if square:
-            w, h = max(w, h), max(w, h) # make square
+        if size: # make square
+            w, h = max(w, h), max(w, h)
         bitmap = wx.EmptyBitmap(w, h)
         dc = wx.MemoryDC(bitmap)
         self._draw_params = (scale, (w, h))
         self.draw_level(dc)
         self._draw_params = None
         del dc
-        if size:
-            s1 = max(w, h)
-            s2 = float(size)
-            p = s1 / s2
+        if size: # scale to size
             image = wx.ImageFromBitmap(bitmap)
-            image.Rescale(int(w * p), int(h * p), wx.IMAGE_QUALITY_HIGH)
+            image.Rescale(size, size, wx.IMAGE_QUALITY_HIGH)
             bitmap = wx.BitmapFromImage(image)
         return bitmap
     def draw(self, dc):
