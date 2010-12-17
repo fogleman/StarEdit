@@ -453,10 +453,13 @@ class Frame(wx.Frame):
         self.create_manager()
         self.create_menu()
         self.create_statusbar()
-        self.new()
         self.set_default_size()
         self.Center()
         set_icon(self)
+        if len(sys.argv) == 2:
+            self.open(sys.argv[1])
+        else:
+            self.new()
         self.Bind(wx.EVT_CLOSE, self.on_close)
     @property
     def control(self):
@@ -696,9 +699,15 @@ class Frame(wx.Frame):
             self.show_page(level)
             break
     def new(self):
-        if self.confirm_close():
-            self.set_project(Project())
-            self.unsaved = False
+        self.path = None
+        project = Project()
+        self.set_project(project)
+        self.unsaved = False
+    def open(self, path):
+        self.path = path
+        project = Project.load(path)
+        self.set_project(project)
+        self.unsaved = False
     def on_page_closed(self, event):
         pass
     def confirm_close(self):
@@ -752,17 +761,15 @@ class Frame(wx.Frame):
                 return
         event.Skip()
     def on_new(self, event):
-        self.new()
+        if self.confirm_close():
+            self.new()
     def on_open(self, event):
         if self.confirm_close():
             dialog = wx.FileDialog(self, 'Open', wildcard='*.star', style=wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
             result = dialog.ShowModal()
             if result == wx.ID_OK:
                 path = dialog.GetPath()
-                self.path = path
-                project = Project.load(path)
-                self.set_project(project)
-                self.unsaved = False
+                self.open(path)
     def on_import(self, event):
         dialog = wx.FileDialog(self, 'Import', wildcard='*.star', style=wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
         result = dialog.ShowModal()

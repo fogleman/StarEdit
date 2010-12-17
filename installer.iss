@@ -43,5 +43,12 @@ Name: "{group}\{cm:UninstallProgram,Star Edit}"; Filename: "{uninstallexe}"
 Name: "{userdesktop}\Star Edit"; Filename: "{app}\star-edit.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\Star Edit"; Filename: "{app}\star-edit.exe"; WorkingDir: "{app}"; Tasks: quicklaunchicon
 
+[Registry]
+Root: HKCR; Subkey: ".star"; ValueType: string; ValueName: ""; ValueData: "StarEditFile"; Flags: uninsdeletevalue
+Root: HKCR; Subkey: "StarEditFile"; ValueType: string; ValueName: ""; ValueData: "Star Edit"; Flags: uninsdeletekey
+Root: HKCR; Subkey: "StarEditFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\star-edit.exe,0"
+Root: HKCR; Subkey: "StarEditFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\star-edit.exe"" ""%1"""
+
 [Run]
 Filename: "{app}\star-edit.exe"; Description: "{cm:LaunchProgram,Star Edit}"; Flags: nowait postinstall
+
