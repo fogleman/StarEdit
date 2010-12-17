@@ -3,6 +3,7 @@ import wx.aui as aui
 import functools
 import json
 import math
+import os
 import sys
 import icons
 
@@ -535,10 +536,13 @@ class Frame(wx.Frame):
         menu = wx.Menu()
         menu_item(self, menu, 'New\tCtrl+N', self.on_new, icons.page)
         menu_item(self, menu, 'Open...\tCtrl+O', self.on_open, icons.folder_page)
-        menu_item(self, menu, 'Import...', self.on_import)
         menu.AppendSeparator()
         menu_item(self, menu, 'Save\tCtrl+S', self.on_save, icons.disk)
         menu_item(self, menu, 'Save As...\tCtrl+Shift+S', self.on_save_as)
+        menu.AppendSeparator()
+        menu_item(self, menu, 'Import Levels...', self.on_import)
+        menu_item(self, menu, 'Export Bitmap...', self.on_export_bitmap)
+        menu_item(self, menu, 'Export All Bitmaps...', self.on_export_all_bitmaps)
         menu.AppendSeparator()
         menu_item(self, menu, 'Exit\tAlt+F4', self.on_exit, icons.door_out)
         menubar.Append(menu, '&File')
@@ -766,18 +770,18 @@ class Frame(wx.Frame):
     def on_open(self, event):
         if self.confirm_close():
             dialog = wx.FileDialog(self, 'Open', wildcard='*.star', style=wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
-            result = dialog.ShowModal()
-            if result == wx.ID_OK:
+            if dialog.ShowModal() == wx.ID_OK:
                 path = dialog.GetPath()
                 self.open(path)
+            dialog.Destroy()
     def on_import(self, event):
         dialog = wx.FileDialog(self, 'Import', wildcard='*.star', style=wx.FD_OPEN|wx.FD_FILE_MUST_EXIST)
-        result = dialog.ShowModal()
-        if result == wx.ID_OK:
+        if dialog.ShowModal() == wx.ID_OK:
             path = dialog.GetPath()
             project = Project.load(path)
             self.project.levels.extend(project.levels)
             self.level_view.update()
+        dialog.Destroy()
     def on_save(self, event):
         if self.path:
             self.project.save(self.path)
@@ -787,14 +791,38 @@ class Frame(wx.Frame):
             return self.on_save_as(None)
     def on_save_as(self, event):
         dialog = wx.FileDialog(self, 'Save', wildcard='*.star', style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
-        result = dialog.ShowModal()
-        if result == wx.ID_OK:
+        if dialog.ShowModal() == wx.ID_OK:
             path = dialog.GetPath()
             self.path = path
             self.project.save(path)
             self.unsaved = False
+            dialog.Destroy()
             return True
-        return False
+        else:
+            dialog.Destroy()
+            return False
+    def get_bitmap_name(self, level):
+        index = self.project.levels.index(level)
+        name = ''.join(c for c in level.name if c.isalnum())
+        return '%d - %s.png' % (index + 1, name)
+    def on_export_bitmap(self, event):
+        name = self.get_bitmap_name(self.control.level)
+        dialog = wx.FileDialog(self, 'Save', wildcard='*.png', defaultFile=name, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+        if dialog.ShowModal() == wx.ID_OK:
+            path = dialog.GetPath()
+            bitmap = self.control.create_bitmap()
+            bitmap.SaveFile(path, wx.BITMAP_TYPE_PNG)
+        dialog.Destroy()
+    def on_export_all_bitmaps(self, event):
+        dialog = wx.DirDialog(self, 'Select Directory', style=wx.DD_DEFAULT_STYLE|wx.DD_DIR_MUST_EXIST)
+        if dialog.ShowModal() == wx.ID_OK:
+            base = dialog.GetPath()
+            for level in self.project.levels:
+                self.show_page(level)
+                name = self.get_bitmap_name(level)
+                path = os.path.join(base, name)
+                bitmap = self.control.create_bitmap()
+                bitmap.SaveFile(path, wx.BITMAP_TYPE_PNG)
     def on_level_activated(self, event):
         level = self.level_view.level_list.get_level()
         if level:
@@ -1305,7 +1333,7 @@ class Control(wx.Panel):
     cache = BitmapCache()
     def __init__(self, parent):
         super(Control, self).__init__(parent, -1, style=wx.WANTS_CHARS)
-        self.buffered = (sys.platform != 'darwin')
+        self._draw_params = None # (scale, (width, height))
         self.scale = 1
         self.minor_grid = (10, 10)
         self.major_grid = (100, 100) #(120, 80)
@@ -1326,14 +1354,14 @@ class Control(wx.Panel):
         self.Bind(wx.EVT_MOUSEWHEEL, self.on_mousewheel)
         self.Bind(wx.EVT_MOUSE_CAPTURE_LOST, self.on_mouse_capture_lost)
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
+    @property
+    def draw_params(self):
+        return self._draw_params or (self.scale, self.GetClientSize())
     def on_size(self, event):
         event.Skip()
         self.Refresh()
     def on_paint(self, event):
-        if self.buffered:
-            dc = wx.BufferedPaintDC(self)
-        else:
-            dc = wx.PaintDC(self)
+        dc = wx.AutoBufferedPaintDC(self)
         self.draw(dc)
     def set_scale(self, scale):
         self.scale = scale
@@ -1352,8 +1380,7 @@ class Control(wx.Panel):
             self.GetParent().FitInside()
     # Conversion Functions
     def wx2cc(self, x, y):
-        s = self.scale
-        w, h = self.GetClientSize()
+        s, (w, h) = self.draw_params
         l, b, r, t = self.level.bounds
         p = (w - (r - l) * s) / 2
         x = l + (x - p) / s
@@ -1361,8 +1388,7 @@ class Control(wx.Panel):
         y = t - (y - p) / s
         return x, y
     def cc2wx(self, x, y, radius=None):
-        s = self.scale
-        w, h = self.GetClientSize()
+        s, (w, h) = self.draw_params
         l, b, r, t = self.level.bounds
         p = (w - (r - l) * s) / 2
         q = s * (x - l)
@@ -1373,7 +1399,7 @@ class Control(wx.Panel):
         if radius is None:
             return x, y
         else:
-            radius = radius * self.scale
+            radius = radius * s
             return x, y, radius
     # Primitive Rendering Functions
     def line(self, dc, x1, y1, x2, y2):
@@ -1396,6 +1422,25 @@ class Control(wx.Panel):
         x, y = self.cc2wx(x, y)
         dc.DrawText(text, x - w / 2, y - h / 2)
     # Drawing Functions
+    def create_bitmap(self, scale=1, size=256, square=True):
+        l, b, r, t = self.level.bounds
+        w, h = r - l, t - b
+        if square:
+            w, h = max(w, h), max(w, h) # make square
+        bitmap = wx.EmptyBitmap(w, h)
+        dc = wx.MemoryDC(bitmap)
+        self._draw_params = (scale, (w, h))
+        self.draw_level(dc)
+        self._draw_params = None
+        del dc
+        if size:
+            s1 = max(w, h)
+            s2 = float(size)
+            p = s1 / s2
+            image = wx.ImageFromBitmap(bitmap)
+            image.Rescale(int(w * p), int(h * p), wx.IMAGE_QUALITY_HIGH)
+            bitmap = wx.BitmapFromImage(image)
+        return bitmap
     def draw(self, dc):
         dc.SetBackground(wx.BLACK_BRUSH)
         dc.Clear()
@@ -1460,8 +1505,9 @@ class Control(wx.Panel):
             dy = entity.y - path.y
             self.line(dc, entity.x, entity.y, entity.x - dx * 2, entity.y - dy * 2)
     def draw_entity(self, dc, entity):
+        scale, dummy = self.draw_params
         selected = entity in self.selection
-        bitmap = Control.cache.get_bitmap(entity, self.scale, selected)
+        bitmap = Control.cache.get_bitmap(entity, scale, selected)
         w, h = bitmap.GetSize()
         x, y = self.cc2wx(entity.x, entity.y)
         dc.DrawBitmap(bitmap, x - w / 2, y - h / 2, True)
