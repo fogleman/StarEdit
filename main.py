@@ -1,5 +1,6 @@
 import wx
 import wx.aui as aui
+import Image
 import functools
 import json
 import math
@@ -77,6 +78,16 @@ def copy_path(src, dest):
     if src.path:
         dest.path = src.path.copy()
     return dest
+    
+def wx2pil(image):
+    width, height = image.GetWidth(), image.GetHeight()
+    data = image.GetData()
+    return Image.fromstring('RGB', (width, height), data)
+    
+def pil2wx(image):
+    width, height = image.size
+    data = image.tostring()
+    return wx.ImageFromData(width, height, data)
     
 # Model Classes
 class Project(object):
@@ -1435,7 +1446,9 @@ class Control(wx.Panel):
         del dc
         if size: # scale to size
             image = wx.ImageFromBitmap(bitmap)
-            image.Rescale(size, size, wx.IMAGE_QUALITY_HIGH)
+            image = wx2pil(image)
+            image = image.resize((size, size), Image.ANTIALIAS)
+            image = pil2wx(image)
             bitmap = wx.BitmapFromImage(image)
         return bitmap
     def draw(self, dc):
