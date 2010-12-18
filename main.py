@@ -1,6 +1,5 @@
 import wx
 import wx.aui as aui
-import Image
 import functools
 import json
 import math
@@ -8,6 +7,11 @@ import os
 import sys
 import icons
 
+try:
+    import Image
+except Exception:
+    pass
+    
 json.encoder.FLOAT_REPR = lambda x: format(x, '.2f')
 
 TITLE = 'Star Edit'
@@ -298,6 +302,7 @@ class Planet(Entity):
             icons.planet4,
             icons.planet5,
             icons.planet6,
+            icons.planet7,
         ]
         return images[self.sprite].GetImage()
     @property
@@ -1102,6 +1107,7 @@ class PlanetDialog(ScaleDialog):
             ('Generic (Purple)', 3),
             ('Saturn (Cool)', 4),
             ('Sun', 5),
+            ('Europa', 6),
         ]
         grid = super(PlanetDialog, self).create_controls(parent)
         text = wx.StaticText(parent, -1, 'Sprite')
@@ -1440,15 +1446,20 @@ class Control(wx.Panel):
             w, h = max(w, h), max(w, h)
         bitmap = wx.EmptyBitmap(w, h)
         dc = wx.MemoryDC(bitmap)
+        dc.SetBackground(wx.BLACK_BRUSH)
+        dc.Clear()
         self._draw_params = (scale, (w, h))
         self.draw_level(dc)
         self._draw_params = None
         del dc
         if size: # scale to size
             image = wx.ImageFromBitmap(bitmap)
-            image = wx2pil(image)
-            image = image.resize((size, size), Image.ANTIALIAS)
-            image = pil2wx(image)
+            try:
+                image = wx2pil(image)
+                image = image.resize((size, size), Image.ANTIALIAS)
+                image = pil2wx(image)
+            except Exception:
+                image.Rescale(size, size, wx.IMAGE_QUALITY_HIGH)
             bitmap = wx.BitmapFromImage(image)
         return bitmap
     def draw(self, dc):
@@ -1684,7 +1695,7 @@ class Control(wx.Panel):
         self.reset_controls()
         self.Refresh()
     def on_mousewheel(self, event):
-        if event.ControlDown():
+        if event.CmdDown():
             direction = event.GetWheelRotation()
             direction = direction / abs(direction)
             step = 10.0
@@ -1704,7 +1715,7 @@ class Control(wx.Panel):
         }
         if self.selection and code in directions:
             dx, dy = directions[code]
-            if not event.ControlDown():
+            if not event.CmdDown():
                 dx *= self.minor_grid[0]
                 dy *= self.minor_grid[1]
             for entity in self.selection:
@@ -1729,7 +1740,7 @@ class Control(wx.Panel):
         self.cursor = (x, y)
         entity = self.get_entity_at(x, y)
         if entity:
-            if event.ControlDown():
+            if event.CmdDown():
                 if entity in self.selection:
                     self.selection.remove(entity)
                 else:
@@ -1745,7 +1756,7 @@ class Control(wx.Panel):
                 self.moving = [(e, e.x, e.y, e.path.copy() if e.path else None) for e in entities]
                 self.CaptureMouse()
         else:
-            if not event.ControlDown():
+            if not event.CmdDown():
                 self.selection.clear()
             self.selecting = (x, y)
             self.CaptureMouse()
@@ -1759,7 +1770,7 @@ class Control(wx.Panel):
         if self.selecting:
             l, b, r, t = self.get_selection()
             entities = set(self.get_entities_within(l, b, r, t))
-            if event.ControlDown():
+            if event.CmdDown():
                 self.selection ^= entities
             else:
                 self.selection = entities
