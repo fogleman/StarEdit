@@ -964,7 +964,7 @@ class Frame(wx.Frame):
     def on_rotate(self, event):
         angle = self.get_string('Enter angle (degrees):')
         try:
-            angle = int(angle)
+            angle = float(angle)
         except Exception:
             return
         self.control.rotate(angle)
