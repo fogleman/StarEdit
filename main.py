@@ -622,13 +622,15 @@ class Frame(wx.Frame):
         func = functools.partial(self.on_mirror, mx=-1, my=-1)
         menu_item(self, menu, 'Mirror (Both)', func)
         menu_item(self, menu, 'Rotate...', self.on_rotate)
+        menu_item(self, menu, 'Inset', self.on_inset, icons.arrow_in)
+        menu_item(self, menu, 'Outset', self.on_outset, icons.arrow_out)
         menu.AppendSeparator()
         menu_item(self, menu, 'Linear Array...', self.on_linear_array, icons.arrow_left)
         menu_item(self, menu, 'Circular Array...', self.on_circular_array, icons.arrow_rotate_anticlockwise)
         menu.AppendSeparator()
-        menu_item(self, menu, 'Linear Path...', self.on_linear_path)
-        menu_item(self, menu, 'Circular Path...', self.on_circular_path)
-        menu_item(self, menu, 'Delete Path', self.on_delete_path)
+        menu_item(self, menu, 'Linear Path...', self.on_linear_path, icons.arrow_left)
+        menu_item(self, menu, 'Circular Path...', self.on_circular_path, icons.arrow_rotate_anticlockwise)
+        menu_item(self, menu, 'Delete Path', self.on_delete_path, icons.cross)
         menubar.Append(menu, '&Tools')
         self.SetMenuBar(menubar)
     def create_toolbar(self):
@@ -658,8 +660,15 @@ class Frame(wx.Frame):
         tool_item(self, toolbar, 'Mirror (X)', func, icons.shape_flip_horizontal)
         func = functools.partial(self.on_mirror, my=-1)
         tool_item(self, toolbar, 'Mirror (Y)', func, icons.shape_flip_vertical)
+        tool_item(self, toolbar, 'Inset', self.on_inset, icons.arrow_in)
+        tool_item(self, toolbar, 'Outset', self.on_outset, icons.arrow_out)
+        toolbar.AddSeparator()
         tool_item(self, toolbar, 'Linear Array', self.on_linear_array, icons.arrow_left)
         tool_item(self, toolbar, 'Circular Array', self.on_circular_array, icons.arrow_rotate_anticlockwise)
+        toolbar.AddSeparator()
+        tool_item(self, toolbar, 'Linear Path', self.on_linear_path, icons.arrow_left)
+        tool_item(self, toolbar, 'Circular Path', self.on_circular_path, icons.arrow_rotate_anticlockwise)
+        tool_item(self, toolbar, 'Delete Path', self.on_delete_path, icons.cross)
         toolbar.Realize()
         toolbar.Fit()
         return toolbar
@@ -948,6 +957,10 @@ class Frame(wx.Frame):
         self.control.add_entity(entity)
     def on_mirror(self, event, mx=1, my=1):
         self.control.mirror(mx, my)
+    def on_inset(self, event):
+        self.control.inset()
+    def on_outset(self, event):
+        self.control.outset()
     def on_rotate(self, event):
         angle = self.get_string('Enter angle (degrees):')
         try:
@@ -1624,6 +1637,27 @@ class Control(wx.Panel):
                 entity.path.x *= mx
                 entity.path.y *= my
         self.changed()
+    def inset(self):
+        step = min(self.minor_grid)
+        self._do_set(-step)
+    def outset(self):
+        step = min(self.minor_grid)
+        self._do_set(step)
+    def _do_set(self, dr):
+        for entity in self.selection:
+            entity.x, entity.y = self._add_radius(entity.x, entity.y, dr)
+            if entity.path:
+                entity.path.x, entity.path.y = self._add_radius(entity.path.x, entity.path.y, dr)
+        self.changed()
+    def _add_radius(self, x, y, dr):
+        if x == 0 and y == 0:
+            return x, y
+        radius = (x * x + y * y) ** 0.5
+        radius += dr
+        angle = math.atan2(y, x)
+        x = math.cos(angle) * radius
+        y = math.sin(angle) * radius
+        return x, y
     def rotate(self, degrees):
         for entity in self.selection:
             entity.x, entity.y = self._rotate(entity.x, entity.y, degrees)
