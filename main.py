@@ -215,7 +215,17 @@ class Entity(object):
         if y > t - radius:
             return False
         return True
-        
+    @property
+    def draw_path_key(self):
+        path = self.path
+        if isinstance(path, CircularPath):
+            dx = self.x - path.x
+            dy = self.y - path.y
+            radius = (dx * dx + dy * dy) ** 0.5
+            return (CircularPath, int(path.x), int(path.y), int(radius))
+        else:
+            return None
+            
 class CircularPath(object):
     def __init__(self, x, y, period, clockwise):
         self.x = x
@@ -1508,8 +1518,13 @@ class Control(wx.Panel):
             self.rectangle(dc, l, b, r, t)
             dc.SetLogicalFunction(wx.COPY)
     def draw_level(self, dc):
+        keys = set()
         for entity in self.level.entities:
-            self.draw_path(dc, entity)
+            key = entity.draw_path_key
+            if key is None or key not in keys:
+                self.draw_path(dc, entity)
+                if key:
+                    keys.add(key)
         for entity in self.level.entities:
             self.draw_entity(dc, entity)
     def draw_path(self, dc, entity):
