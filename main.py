@@ -438,9 +438,10 @@ class Item(Entity):
         
 class Teleport(Entity):
     radius = RADIUS_TELEPORT
-    def __init__(self, x, y, number):
+    def __init__(self, x, y, number, target):
         super(Teleport, self).__init__(x, y)
         self.number = number
+        self.target = target
     @property
     def image(self):
         return icons.teleport.GetImage()
@@ -453,6 +454,7 @@ class Teleport(Entity):
             'x': self.x,
             'y': self.y,
             'number': self.number,
+            'target': self.target,
         }
         return result
     @staticmethod
@@ -460,9 +462,10 @@ class Teleport(Entity):
         x = key.get('x', 0)
         y = key.get('y', 0)
         number = key.get('number', 0)
-        return Item(x, y, number)
+        target = key.get('target', 0)
+        return Item(x, y, number, target)
     def copy(self):
-        return copy_path(self, Teleport(self.x, self.y, self.number))
+        return copy_path(self, Teleport(self.x, self.y, self.number, self.target))
         
 class Star(Entity):
     radius = RADIUS_STAR
@@ -989,7 +992,7 @@ class Frame(wx.Frame):
         entity = Item(0, 0, 0)
         self.control.add_entity(entity)
     def on_teleport(self, event):
-        entity = Teleport(0, 0, 0)
+        entity = Teleport(0, 0, 0, 0)
         self.control.add_entity(entity)
     def on_mirror(self, event, mx=1, my=1):
         self.control.mirror(mx, my)
@@ -1225,14 +1228,21 @@ class TeleportDialog(BaseDialog):
         self.number = wx.TextCtrl(parent, -1)
         grid.Add(text, (0, 0), flag=wx.ALIGN_CENTER_VERTICAL)
         grid.Add(self.number, (0, 1))
+        text = wx.StaticText(parent, -1, 'Target')
+        self.target = wx.TextCtrl(parent, -1)
+        grid.Add(text, (1, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.target, (1, 1))
         return grid
     def update_controls(self):
         entity = self.entities[0]
         self.number.SetValue(str(entity.number))
+        self.target.SetValue(str(entity.target))
     def update_model(self):
         number = int(self.number.GetValue())
+        target = int(self.target.GetValue())
         for entity in self.entities:
             entity.number = number
+            entity.target = target
             
 class LinearPathDialog(BaseDialog):
     def __init__(self, parent, entities):
