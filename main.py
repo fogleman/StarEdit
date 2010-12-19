@@ -463,7 +463,7 @@ class Teleport(Entity):
         y = key.get('y', 0)
         number = key.get('number', 0)
         target = key.get('target', 0)
-        return Item(x, y, number, target)
+        return Teleport(x, y, number, target)
     def copy(self):
         return copy_path(self, Teleport(self.x, self.y, self.number, self.target))
         
