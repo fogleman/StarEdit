@@ -619,7 +619,7 @@ class Frame(wx.Frame):
         menu_item(self, menu, 'Delete\tDel', self.on_delete, icons.page_delete)
         menu_item(self, menu, 'Select All\tCtrl+A', self.on_select_all)
         menu.AppendSeparator()
-        for cls in (Rocket, Star, Planet, Bumper, Asteroid, Item):
+        for cls in (Rocket, Star, Planet, Bumper, Asteroid, Item, Teleport):
             name = cls.__name__
             func = functools.partial(self.on_select_all, cls=cls)
             menu_item(self, menu, 'Select All - %ss' % name, func)
