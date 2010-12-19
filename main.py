@@ -25,6 +25,7 @@ RADIUS_ITEM = 16
 RADIUS_PLANET = 64
 RADIUS_ROCKET = 20
 RADIUS_STAR = 12
+RADIUS_TELEPORT = 20
 
 PATH_CIRCULAR = 1
 PATH_LINEAR = 2
@@ -151,6 +152,7 @@ class Level(object):
             'planets': self.keys_of_type(Planet),
             'rockets': self.keys_of_type(Rocket),
             'stars': self.keys_of_type(Star),
+            'teleports': self.keys_of_type(Teleport),
         }
         result = {
             'name': self.name,
@@ -171,6 +173,7 @@ class Level(object):
             ('planets', Planet),
             ('rockets', Rocket),
             ('stars', Star),
+            ('teleports', Teleport),
         ]
         path_mapping = {
             PATH_CIRCULAR: CircularPath,
@@ -433,6 +436,34 @@ class Item(Entity):
     def copy(self):
         return copy_path(self, Item(self.x, self.y, self.type))
         
+class Teleport(Entity):
+    radius = RADIUS_TELEPORT
+    def __init__(self, x, y, number):
+        super(Teleport, self).__init__(x, y)
+        self.number = number
+    @property
+    def image(self):
+        return icons.teleport.GetImage()
+    @property
+    def image_key(self):
+        return Teleport
+    @property
+    def key(self):
+        result = {
+            'x': self.x,
+            'y': self.y,
+            'number': self.number,
+        }
+        return result
+    @staticmethod
+    def from_key(key):
+        x = key.get('x', 0)
+        y = key.get('y', 0)
+        number = key.get('number', 0)
+        return Item(x, y, number)
+    def copy(self):
+        return copy_path(self, Teleport(self.x, self.y, self.number))
+        
 class Star(Entity):
     radius = RADIUS_STAR
     @property
@@ -612,6 +643,7 @@ class Frame(wx.Frame):
         menu_item(self, menu, 'Bumper\tB', self.on_bumper, icons.icon_bumper)
         menu_item(self, menu, 'Asteroid\tA', self.on_asteroid, icons.icon_asteroid)
         menu_item(self, menu, 'Item\tI', self.on_item, icons.icon_item)
+        menu_item(self, menu, 'Teleport\tT', self.on_teleport, icons.icon_teleport)
         menubar.Append(menu, '&Objects')
         # Tools
         menu = wx.Menu()
@@ -655,6 +687,7 @@ class Frame(wx.Frame):
         tool_item(self, toolbar, 'Bumper', self.on_bumper, icons.icon_bumper)
         tool_item(self, toolbar, 'Asteroid', self.on_asteroid, icons.icon_asteroid)
         tool_item(self, toolbar, 'Item', self.on_item, icons.icon_item)
+        tool_item(self, toolbar, 'Teleport', self.on_teleport, icons.icon_teleport)
         toolbar.AddSeparator()
         func = functools.partial(self.on_mirror, mx=-1)
         tool_item(self, toolbar, 'Mirror (X)', func, icons.shape_flip_horizontal)
@@ -955,6 +988,9 @@ class Frame(wx.Frame):
     def on_item(self, event):
         entity = Item(0, 0, 0)
         self.control.add_entity(entity)
+    def on_teleport(self, event):
+        entity = Teleport(0, 0, 0)
+        self.control.add_entity(entity)
     def on_mirror(self, event, mx=1, my=1):
         self.control.mirror(mx, my)
     def on_inset(self, event):
@@ -1014,6 +1050,11 @@ class Frame(wx.Frame):
             dialog.Destroy()
         elif all(isinstance(entity, Item) for entity in entities):
             dialog = ItemDialog(self, entities)
+            if dialog.ShowModal() == wx.ID_OK:
+                event.GetEventObject().changed()
+            dialog.Destroy()
+        elif all(isinstance(entity, Teleport) for entity in entities):
+            dialog = TeleportDialog(self, entities)
             if dialog.ShowModal() == wx.ID_OK:
                 event.GetEventObject().changed()
             dialog.Destroy()
@@ -1173,6 +1214,25 @@ class ItemDialog(BaseDialog):
         type = get_choice(self.type)
         for entity in self.entities:
             entity.type = type
+            
+class TeleportDialog(BaseDialog):
+    def __init__(self, parent, entities):
+        self.entities = entities
+        super(TeleportDialog, self).__init__(parent, 'Entity Options')
+    def create_controls(self, parent):
+        grid = wx.GridBagSizer(8, 8)
+        text = wx.StaticText(parent, -1, 'Number')
+        self.number = wx.TextCtrl(parent, -1)
+        grid.Add(text, (0, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+        grid.Add(self.number, (0, 1))
+        return grid
+    def update_controls(self):
+        entity = self.entities[0]
+        self.number.SetValue(str(entity.number))
+    def update_model(self):
+        number = int(self.number.GetValue())
+        for entity in self.entities:
+            entity.number = number
             
 class LinearPathDialog(BaseDialog):
     def __init__(self, parent, entities):

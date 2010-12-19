@@ -14,7 +14,10 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.48.0 r9654"
-   sodipodi:docname="New document 1">
+   sodipodi:docname="icons.svg"
+   inkscape:export-filename="/Users/fogleman/Desktop/teleport.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
   <defs
      id="defs4" />
   <sodipodi:namedview
@@ -24,9 +27,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
-     inkscape:cx="11.5"
-     inkscape:cy="6.5"
+     inkscape:zoom="8"
+     inkscape:cx="8.1392946"
+     inkscape:cy="3.7635867"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -53,34 +56,6 @@
      id="layer1"
      transform="translate(0,-1036.3622)">
     <g
-       id="g4962"
-       inkscape:export-filename="C:\Users\mfogleman\Desktop\icon_star.png"
-       inkscape:export-xdpi="90"
-       inkscape:export-ydpi="90">
-      <path
-         transform="matrix(1.2647059,0,0,1.2112676,-0.64705911,1033.3622)"
-         d="m 12.372093,9.0813951 a 5.5348835,5.7790699 0 1 1 -11.0697673,0 5.5348835,5.7790699 0 1 1 11.0697673,0 z"
-         sodipodi:ry="5.7790699"
-         sodipodi:rx="5.5348835"
-         sodipodi:cy="9.0813951"
-         sodipodi:cx="6.8372092"
-         id="path2985"
-         style="opacity:1;fill:#ffe97f;fill-opacity:1;fill-rule:evenodd;stroke:#ff7f00;stroke-width:1.61590242000000010;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         sodipodi:type="arc" />
-      <flowRoot
-         transform="translate(0.55953171,1036.1294)"
-         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff7f00;fill-opacity:1;stroke:none;font-family:Microsoft Sans Serif;-inkscape-font-specification:Microsoft Sans Serif"
-         id="flowRoot4869"
-         xml:space="preserve"><flowRegion
-           id="flowRegion4871"><rect
-             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ff7f00;fill-opacity:1;font-family:Microsoft Sans Serif;-inkscape-font-specification:Microsoft Sans Serif"
-             y="4.3551798"
-             x="4.7949262"
-             height="8.6765327"
-             width="7.9915433"
-             id="rect4873" /></flowRegion><flowPara
-           id="flowPara4875">S</flowPara></flowRoot>    </g>
-    <g
        id="g4955"
        inkscape:export-filename="C:\Users\mfogleman\Desktop\icon_rocket.png"
        inkscape:export-xdpi="90"
@@ -93,7 +68,7 @@
          sodipodi:cy="9.0813951"
          sodipodi:rx="5.5348835"
          sodipodi:ry="5.7790699"
-         d="m 12.372093,9.0813951 a 5.5348835,5.7790699 0 1 1 -11.0697673,0 5.5348835,5.7790699 0 1 1 11.0697673,0 z"
+         d="m 12.372093,9.0813951 c 0,3.1916919 -2.478052,5.7790699 -5.5348838,5.7790699 -3.0568317,0 -5.5348835,-2.587378 -5.5348835,-5.7790699 0,-3.1916921 2.4780518,-5.7790699 5.5348835,-5.7790699 3.0568318,0 5.5348838,2.5873778 5.5348838,5.7790699 z"
          transform="matrix(1.2647059,0,0,1.2112676,20.502262,991.34184)" />
       <flowRoot
          xml:space="preserve"
@@ -121,7 +96,7 @@
          sodipodi:cy="9.0813951"
          sodipodi:rx="5.5348835"
          sodipodi:ry="5.7790699"
-         d="m 12.372093,9.0813951 a 5.5348835,5.7790699 0 1 1 -11.0697673,0 5.5348835,5.7790699 0 1 1 11.0697673,0 z"
+         d="m 12.372093,9.0813951 c 0,3.1916919 -2.478052,5.7790699 -5.5348838,5.7790699 -3.0568317,0 -5.5348835,-2.587378 -5.5348835,-5.7790699 0,-3.1916921 2.4780518,-5.7790699 5.5348835,-5.7790699 3.0568318,0 5.5348838,2.5873778 5.5348838,5.7790699 z"
          transform="matrix(1.2647059,0,0,1.2112676,-12.647059,981.3622)" />
       <flowRoot
          xml:space="preserve"
@@ -149,7 +124,7 @@
          sodipodi:cy="9.0813951"
          sodipodi:rx="5.5348835"
          sodipodi:ry="5.7790699"
-         d="m 12.372093,9.0813951 a 5.5348835,5.7790699 0 1 1 -11.0697673,0 5.5348835,5.7790699 0 1 1 11.0697673,0 z"
+         d="m 12.372093,9.0813951 c 0,3.1916919 -2.478052,5.7790699 -5.5348838,5.7790699 -3.0568317,0 -5.5348835,-2.587378 -5.5348835,-5.7790699 0,-3.1916921 2.4780518,-5.7790699 5.5348835,-5.7790699 3.0568318,0 5.5348838,2.5873778 5.5348838,5.7790699 z"
          transform="matrix(1.2647059,0,0,1.2112676,-44.647059,997.3622)" />
       <flowRoot
          xml:space="preserve"
@@ -177,7 +152,7 @@
          sodipodi:cy="9.0813951"
          sodipodi:rx="5.5348835"
          sodipodi:ry="5.7790699"
-         d="m 12.372093,9.0813951 a 5.5348835,5.7790699 0 1 1 -11.0697673,0 5.5348835,5.7790699 0 1 1 11.0697673,0 z"
+         d="m 12.372093,9.0813951 c 0,3.1916919 -2.478052,5.7790699 -5.5348838,5.7790699 -3.0568317,0 -5.5348835,-2.587378 -5.5348835,-5.7790699 0,-3.1916921 2.4780518,-5.7790699 5.5348835,-5.7790699 3.0568318,0 5.5348838,2.5873778 5.5348838,5.7790699 z"
          transform="matrix(1.2647059,0,0,1.2112676,-86.647059,962.3622)" />
       <flowRoot
          xml:space="preserve"
@@ -205,7 +180,7 @@
          sodipodi:cy="9.0813951"
          sodipodi:rx="5.5348835"
          sodipodi:ry="5.7790699"
-         d="m 12.372093,9.0813951 a 5.5348835,5.7790699 0 1 1 -11.0697673,0 5.5348835,5.7790699 0 1 1 11.0697673,0 z"
+         d="m 12.372093,9.0813951 c 0,3.1916919 -2.478052,5.7790699 -5.5348838,5.7790699 -3.0568317,0 -5.5348835,-2.587378 -5.5348835,-5.7790699 0,-3.1916921 2.4780518,-5.7790699 5.5348835,-5.7790699 3.0568318,0 5.5348838,2.5873778 5.5348838,5.7790699 z"
          transform="matrix(1.2647059,0,0,1.2112676,12.352941,938.3622)" />
       <flowRoot
          xml:space="preserve"
@@ -220,5 +195,77 @@
              y="4.3551798"
              style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#007f0e;fill-opacity:1;font-family:Microsoft Sans Serif;-inkscape-font-specification:Microsoft Sans Serif" /></flowRegion><flowPara
            id="flowPara4925">I</flowPara></flowRoot>    </g>
+    <g
+       inkscape:export-ydpi="90"
+       inkscape:export-xdpi="90"
+       inkscape:export-filename="C:\Users\mfogleman\Desktop\icon_star.png"
+       id="g3018"
+       transform="translate(-129,-24)">
+      <path
+         sodipodi:type="arc"
+         style="fill:#ffe97f;fill-opacity:1;fill-rule:evenodd;stroke:#ff7f00;stroke-width:1.61590242;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         id="path3020"
+         sodipodi:cx="6.8372092"
+         sodipodi:cy="9.0813951"
+         sodipodi:rx="5.5348835"
+         sodipodi:ry="5.7790699"
+         d="m 12.372093,9.0813951 a 5.5348835,5.7790699 0 1 1 -11.0697673,0 5.5348835,5.7790699 0 1 1 11.0697673,0 z"
+         transform="matrix(1.2647059,0,0,1.2112676,-0.64705911,1033.3622)" />
+      <flowRoot
+         xml:space="preserve"
+         id="flowRoot3022"
+         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff7f00;fill-opacity:1;stroke:none;font-family:Microsoft Sans Serif;-inkscape-font-specification:Microsoft Sans Serif"
+         transform="translate(0.55953171,1036.1294)"><flowRegion
+           id="flowRegion3024"><rect
+             id="rect3026"
+             width="7.9915433"
+             height="8.6765327"
+             x="4.7949262"
+             y="4.3551798"
+             style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ff7f00;fill-opacity:1;font-family:Microsoft Sans Serif;-inkscape-font-specification:Microsoft Sans Serif" /></flowRegion><flowPara
+           id="flowPara3028">S</flowPara></flowRoot>    </g>
+    <g
+       id="g3034">
+      <g
+         style="fill:#afdde9;stroke:#2c89a0"
+         inkscape:export-ydpi="90"
+         inkscape:export-xdpi="90"
+         inkscape:export-filename="C:\Users\mfogleman\Desktop\icon_star.png"
+         id="g4962">
+        <path
+           sodipodi:type="arc"
+           style="opacity:1;fill:#afdde9;fill-opacity:1;fill-rule:evenodd;stroke:#2c89a0;stroke-width:1.61590242000000006;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="path2985"
+           sodipodi:cx="6.8372092"
+           sodipodi:cy="9.0813951"
+           sodipodi:rx="5.5348835"
+           sodipodi:ry="5.7790699"
+           d="m 12.372093,9.0813951 c 0,3.1916919 -2.478052,5.7790699 -5.5348838,5.7790699 -3.0568317,0 -5.5348835,-2.587378 -5.5348835,-5.7790699 0,-3.1916921 2.4780518,-5.7790699 5.5348835,-5.7790699 3.0568318,0 5.5348838,2.5873778 5.5348838,5.7790699 z"
+           transform="matrix(1.2647059,0,0,1.2112676,-0.64705911,1033.3622)" />
+        <flowRoot
+           xml:space="preserve"
+           id="flowRoot4869"
+           style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#afdde9;fill-opacity:1;stroke:#2c89a0;font-family:Microsoft Sans Serif;-inkscape-font-specification:Microsoft Sans Serif"
+           transform="translate(0.55953171,1036.1294)"><flowRegion
+             id="flowRegion4871"><rect
+               id="rect4873"
+               width="7.9915433"
+               height="8.6765327"
+               x="4.7949262"
+               y="4.3551798"
+               style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#afdde9;fill-opacity:1;font-family:Microsoft Sans Serif;-inkscape-font-specification:Microsoft Sans Serif;stroke:#2c89a0" /></flowRegion><flowPara
+             id="flowPara4875">S</flowPara></flowRoot>      </g>
+      <text
+         sodipodi:linespacing="125%"
+         id="text3030"
+         y="1047.3622"
+         x="5.5625"
+         style="font-size:8px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#2c89a0;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+         xml:space="preserve"><tspan
+           y="1047.3622"
+           x="5.5625"
+           id="tspan3032"
+           sodipodi:role="line">T</tspan></text>
+    </g>
   </g>
 </svg>
