@@ -619,7 +619,7 @@ class Frame(wx.Frame):
         menu_item(self, menu, 'Delete\tDel', self.on_delete, icons.page_delete)
         menu_item(self, menu, 'Select All\tCtrl+A', self.on_select_all)
         menu.AppendSeparator()
-        for cls in (Rocket, Star, Planet, Bumper, Asteroid, Item, Teleport):
+        for cls in (Asteroid, Bumper, Item, Planet, Rocket, Star, Teleport):
             name = cls.__name__
             func = functools.partial(self.on_select_all, cls=cls)
             menu_item(self, menu, 'Select All - %ss' % name, func)
@@ -640,12 +640,12 @@ class Frame(wx.Frame):
         menubar.Append(menu, '&View')
         # Objects
         menu = wx.Menu()
+        menu_item(self, menu, 'Asteroid\tA', self.on_asteroid, icons.icon_asteroid)
+        menu_item(self, menu, 'Bumper\tB', self.on_bumper, icons.icon_bumper)
+        menu_item(self, menu, 'Item\tI', self.on_item, icons.icon_item)
+        menu_item(self, menu, 'Planet\tP', self.on_planet, icons.icon_planet)
         menu_item(self, menu, 'Rocket\tR', self.on_rocket, icons.icon_rocket)
         menu_item(self, menu, 'Star\tS', self.on_star, icons.icon_star)
-        menu_item(self, menu, 'Planet\tP', self.on_planet, icons.icon_planet)
-        menu_item(self, menu, 'Bumper\tB', self.on_bumper, icons.icon_bumper)
-        menu_item(self, menu, 'Asteroid\tA', self.on_asteroid, icons.icon_asteroid)
-        menu_item(self, menu, 'Item\tI', self.on_item, icons.icon_item)
         menu_item(self, menu, 'Teleport\tT', self.on_teleport, icons.icon_teleport)
         menubar.Append(menu, '&Objects')
         # Tools
@@ -684,12 +684,12 @@ class Frame(wx.Frame):
         tool_item(self, toolbar, 'Paste', self.on_paste, icons.page_paste)
         tool_item(self, toolbar, 'Delete', self.on_delete, icons.page_delete)
         toolbar.AddSeparator()
+        tool_item(self, toolbar, 'Asteroid', self.on_asteroid, icons.icon_asteroid)
+        tool_item(self, toolbar, 'Bumper', self.on_bumper, icons.icon_bumper)
+        tool_item(self, toolbar, 'Item', self.on_item, icons.icon_item)
+        tool_item(self, toolbar, 'Planet', self.on_planet, icons.icon_planet)
         tool_item(self, toolbar, 'Rocket', self.on_rocket, icons.icon_rocket)
         tool_item(self, toolbar, 'Star', self.on_star, icons.icon_star)
-        tool_item(self, toolbar, 'Planet', self.on_planet, icons.icon_planet)
-        tool_item(self, toolbar, 'Bumper', self.on_bumper, icons.icon_bumper)
-        tool_item(self, toolbar, 'Asteroid', self.on_asteroid, icons.icon_asteroid)
-        tool_item(self, toolbar, 'Item', self.on_item, icons.icon_item)
         tool_item(self, toolbar, 'Teleport', self.on_teleport, icons.icon_teleport)
         toolbar.AddSeparator()
         func = functools.partial(self.on_mirror, mx=-1)
