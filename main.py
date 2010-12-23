@@ -1532,7 +1532,7 @@ class Control(wx.Panel):
         x, y = self.cc2wx(x, y)
         dc.DrawText(text, x - w / 2, y - h / 2)
     # Drawing Functions
-    def create_bitmap(self, scale=1, size=256):
+    def create_bitmap(self, scale=1, size=340):
         l, b, r, t = self.level.bounds
         w, h = r - l, t - b
         if size: # make square
