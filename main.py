@@ -874,8 +874,9 @@ class Frame(wx.Frame):
             return False
     def get_bitmap_name(self, level):
         index = self.project.levels.index(level)
-        name = ''.join(c for c in level.name if c.isalnum())
-        return '%d - %s.png' % (index + 1, name)
+        return 'thumb%d.png' % (index + 1)
+        #name = ''.join(c for c in level.name if c.isalnum())
+        #return '%d - %s.png' % (index + 1, name)
     def on_export_bitmap(self, event):
         name = self.get_bitmap_name(self.control.level)
         dialog = wx.FileDialog(self, 'Save', wildcard='*.png', defaultFile=name, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
