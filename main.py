@@ -601,6 +601,7 @@ class Frame(wx.Frame):
         menu_item(self, menu, 'Save As...\tCtrl+Shift+S', self.on_save_as)
         menu.AppendSeparator()
         menu_item(self, menu, 'Import Levels...', self.on_import)
+        menu_item(self, menu, 'Export Levels...', self.on_export)
         menu_item(self, menu, 'Export Bitmap...', self.on_export_bitmap)
         menu_item(self, menu, 'Export All Bitmaps...', self.on_export_all_bitmaps)
         menu.AppendSeparator()
@@ -853,6 +854,17 @@ class Frame(wx.Frame):
             self.project.levels.extend(project.levels)
             self.level_view.update()
         dialog.Destroy()
+    def on_export(self, event):
+        dialog = wx.DirDialog(self, 'Select Directory', style=wx.DD_DEFAULT_STYLE|wx.DD_DIR_MUST_EXIST)
+        if dialog.ShowModal() == wx.ID_OK:
+            base = dialog.GetPath()
+            for index, level in enumerate(self.project.levels):
+                name = 'level%d.star' % (index + 1)
+                path = os.path.join(base, name)
+                project = Project()
+                project.levels = [level.copy()]
+                project.save(path)
+        dialog.Destroy()
     def on_save(self, event):
         if self.path:
             self.project.save(self.path)
@@ -895,6 +907,7 @@ class Frame(wx.Frame):
                 path = os.path.join(base, name)
                 bitmap = self.control.create_bitmap()
                 bitmap.SaveFile(path, wx.BITMAP_TYPE_PNG)
+        dialog.Destroy()
     def on_level_activated(self, event):
         level = self.level_view.level_list.get_level()
         if level:
@@ -1540,7 +1553,7 @@ class Control(wx.Panel):
             w, h = max(w, h), max(w, h)
         bitmap = wx.EmptyBitmap(w, h)
         dc = wx.MemoryDC(bitmap)
-        dc.SetBackground(wx.BLACK_BRUSH)
+        dc.SetBackground(wx.Brush(wx.Color(20, 32, 8)))
         dc.Clear()
         self._draw_params = (scale, (w, h))
         self.draw_level(dc)
