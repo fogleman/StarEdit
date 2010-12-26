@@ -1553,7 +1553,7 @@ class Control(wx.Panel):
             w, h = max(w, h), max(w, h)
         bitmap = wx.EmptyBitmap(w, h)
         dc = wx.MemoryDC(bitmap)
-        dc.SetBackground(wx.Brush(wx.Color(20, 32, 8)))
+        dc.SetBackground(wx.BLACK_BRUSH)
         dc.Clear()
         self._draw_params = (scale, (w, h))
         self.draw_level(dc)
