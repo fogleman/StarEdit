@@ -17,6 +17,7 @@ json.encoder.FLOAT_REPR = lambda x: format(x, '.2f')
 TITLE = 'Star Edit'
 DEFAULT_NAME = '(Untitled)'
 DEFAULT_BOUNDS = (-240, -160, 240, 160)
+DEFAULT_BOUNDS = (-400, -400, 400, 400)
 DEFAULT_SCALE = 0.5
 
 RADIUS_ASTEROID = 32
@@ -1277,7 +1278,7 @@ class LinearPathDialog(BaseDialog):
     def update_model(self):
         period = float(self.period.GetValue())
         for entity in self.entities:
-            entity.path = LinearPath(0, 0, period)
+            entity.path = LinearPath(entity.x / 2.0, entity.y / 2.0, period)
             
 class CircularPathDialog(BaseDialog):
     def __init__(self, parent, entities):
@@ -1546,7 +1547,7 @@ class Control(wx.Panel):
         x, y = self.cc2wx(x, y)
         dc.DrawText(text, x - w / 2, y - h / 2)
     # Drawing Functions
-    def create_bitmap(self, scale=1, size=340):
+    def create_bitmap(self, scale=1, size=300):
         l, b, r, t = self.level.bounds
         w, h = r - l, t - b
         if size: # make square
