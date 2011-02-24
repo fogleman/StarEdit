@@ -857,15 +857,23 @@ class Frame(wx.Frame):
         dialog.Destroy()
     def on_export(self, event):
         dialog = wx.DirDialog(self, 'Select Directory', style=wx.DD_DEFAULT_STYLE|wx.DD_DIR_MUST_EXIST)
-        if dialog.ShowModal() == wx.ID_OK:
+        try:
+            if dialog.ShowModal() != wx.ID_OK:
+                return
+            start = self.get_string('Enter start number:', '1')
+            try:
+                start = int(start)
+            except Exception:
+                return
             base = dialog.GetPath()
             for index, level in enumerate(self.project.levels):
-                name = 'level%d.star' % (index + 1)
+                name = 'level%d.star' % (index + start)
                 path = os.path.join(base, name)
                 project = Project()
                 project.levels = [level.copy()]
                 project.save(path)
-        dialog.Destroy()
+        finally:
+            dialog.Destroy()
     def on_save(self, event):
         if self.path:
             self.project.save(self.path)
@@ -885,14 +893,8 @@ class Frame(wx.Frame):
         else:
             dialog.Destroy()
             return False
-    def get_bitmap_name(self, level):
-        index = self.project.levels.index(level)
-        return 'thumb%d.png' % (index + 1)
-        #name = ''.join(c for c in level.name if c.isalnum())
-        #return '%d - %s.png' % (index + 1, name)
     def on_export_bitmap(self, event):
-        name = self.get_bitmap_name(self.control.level)
-        dialog = wx.FileDialog(self, 'Save', wildcard='*.png', defaultFile=name, style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
+        dialog = wx.FileDialog(self, 'Save', wildcard='*.png', style=wx.FD_SAVE|wx.FD_OVERWRITE_PROMPT)
         if dialog.ShowModal() == wx.ID_OK:
             path = dialog.GetPath()
             bitmap = self.control.create_bitmap()
@@ -900,15 +902,23 @@ class Frame(wx.Frame):
         dialog.Destroy()
     def on_export_all_bitmaps(self, event):
         dialog = wx.DirDialog(self, 'Select Directory', style=wx.DD_DEFAULT_STYLE|wx.DD_DIR_MUST_EXIST)
-        if dialog.ShowModal() == wx.ID_OK:
+        try:
+            if dialog.ShowModal() != wx.ID_OK:
+                return
+            start = self.get_string('Enter start number:', '1')
+            try:
+                start = int(start)
+            except Exception:
+                return
             base = dialog.GetPath()
-            for level in self.project.levels:
+            for index, level in enumerate(self.project.levels):
                 self.show_page(level)
-                name = self.get_bitmap_name(level)
+                name = 'thumb%d.png' % (index + start)
                 path = os.path.join(base, name)
                 bitmap = self.control.create_bitmap()
                 bitmap.SaveFile(path, wx.BITMAP_TYPE_PNG)
-        dialog.Destroy()
+        finally:
+            dialog.Destroy()
     def on_level_activated(self, event):
         level = self.level_view.level_list.get_level()
         if level:
