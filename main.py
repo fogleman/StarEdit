@@ -721,8 +721,10 @@ class Frame(wx.Frame):
         self.manager.Update()
     # Notebook Functions
     def close_pages(self):
+        self.notebook.Freeze()
         for dummy in range(self.notebook.GetPageCount()):
             self.notebook.DeletePage(0)
+        self.notebook.Thaw()
     def close_page(self, level):
         index = self.get_page_index(level)
         if index >= 0:
