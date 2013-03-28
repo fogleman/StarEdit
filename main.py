@@ -1460,8 +1460,8 @@ class BitmapCache(object):
             radius = entity.radius * scale
             dc = wx.MemoryDC(bitmap)
             dc = wx.GCDC(dc)
-            dc.SetPen(wx.Pen(wx.Color(255, 0, 0), 1))
-            dc.SetBrush(wx.Brush(wx.Color(255, 0, 0, 128)))
+            dc.SetPen(wx.Pen(wx.Colour(255, 0, 0), 1))
+            dc.SetBrush(wx.Brush(wx.Colour(255, 0, 0, 128)))
             dc.DrawCircle(x, y, radius)
         return bitmap
         
@@ -1591,12 +1591,12 @@ class Control(wx.Panel):
     def draw_grid(self, dc):
         l, b, r, t = self.level.bounds
         dc.SetBrush(wx.TRANSPARENT_BRUSH)
-        dc.SetPen(wx.Pen(wx.Color(32, 32, 32)))
+        dc.SetPen(wx.Pen(wx.Colour(32, 32, 32)))
         self.draw_grid_step(dc, self.minor_grid)
-        dc.SetPen(wx.Pen(wx.Color(96, 96, 96)))
+        dc.SetPen(wx.Pen(wx.Colour(96, 96, 96)))
         self.draw_grid_step(dc, self.major_grid)
         self.circle(dc, 0, 0, 10)
-        dc.SetPen(wx.Pen(wx.Color(96, 96, 96), 3))
+        dc.SetPen(wx.Pen(wx.Colour(96, 96, 96), 3))
         self.rectangle(dc, l, b, r, t)
     def draw_grid_step(self, dc, step):
         if not self.show_grid:
@@ -1949,7 +1949,7 @@ class Control(wx.Panel):
             
 # Main
 def main():
-    app = wx.PySimpleApp()
+    app = wx.App(False)
     frame = Frame()
     frame.Show()
     app.MainLoop()
